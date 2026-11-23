@@ -1,0 +1,112 @@
+<resources>
+    <string name="app_name">DialMe</string>
+    <string name="app_tagline">আপনার ডায়ালার। আপনার স্টাইল।</string>
+
+    <!-- Main Navigation Tabs -->
+    <string name="nav_favorites">প্রিয়</string>
+    <string name="nav_contacts">পরিচিতি</string>
+    <string name="nav_recents">সাম্প্রতিক</string>
+    <string name="nav_dialpad">ডায়ালপ্যাড</string>
+    <string name="nav_settings">সেটিংস</string>
+
+    <!-- Dialpad & Calling -->
+    <string name="dialpad_enter_number">ফোন নম্বর লিখুন</string>
+    <string name="dialpad_paste_clipboard">পেস্ট করুন %1$s</string>
+    <string name="dialpad_call">কল করুন</string>
+    <string name="dialpad_choose_sim">সিম নির্বাচন করুন</string>
+    <string name="dialpad_enable_dual_sim">ডুয়াল সিম ব্যবহারের অনুমতি দিন</string>
+    <string name="dialpad_speed_dial">স্পিড ডায়াল</string>
+    <string name="dialpad_voicemail">ভয়েসমেইল</string>
+    <string name="dialpad_backspace">মুছুন</string>
+    <string name="dialpad_add_contact">নম্বর সংরক্ষণ</string>
+    <string name="dialpad_send_sms">বার্তা</string>
+    <string name="dialpad_no_t9_matches">\"%1$s\"-এর জন্য কোনো পরিচিতি পাওয়া যায়নি</string>
+    <string name="dialpad_t9_hint">T9 নাম বা নম্বর দিয়ে পরিচিতি খুঁজতে সংখ্যা চাপুন</string>
+
+    <!-- Default Dialer & Permissions -->
+    <string name="role_dialer_banner_title">DialMe-কে ডিফল্ট ফোন অ্যাপ করুন</string>
+    <string name="role_dialer_banner_desc">আসল সিম কলিং, কাস্টম কলার স্ক্রিন এবং সিস্টেম কল নিয়ন্ত্রণের জন্য প্রয়োজন।</string>
+    <string name="role_dialer_cta">ডিফল্ট করুন</string>
+    <string name="role_screening_cta">কল স্ক্রিনিং চালু করুন</string>
+    <string name="permissions_needed_title">অনুমতি প্রয়োজন</string>
+    <string name="permissions_contacts_desc">প্রিয় তালিকা, T9 অনুসন্ধান এবং কলার শনাক্ত করতে পরিচিতির অনুমতি দিন।</string>
+    <string name="permissions_call_log_desc">সাম্প্রতিক কল, মিসড কল এবং পরিসংখ্যান দেখতে কল লগের অনুমতি দিন।</string>
+    <string name="permissions_grant">অনুমতি দিন</string>
+    <string name="permissions_open_settings">অ্যাপ সেটিংস</string>
+
+    <!-- Contacts -->
+    <string name="contacts_search_hint">পরিচিতি বা নম্বর খুঁজুন</string>
+    <string name="contacts_new">নতুন পরিচিতি</string>
+    <string name="contacts_favorites_empty">এখনো কোনো প্রিয় পরিচিতি নেই। এক-ট্যাপে কল করতে তারকা চিহ্নে চাপুন।</string>
+    <string name="contacts_empty">কোনো পরিচিতি পাওয়া যায়নি।</string>
+    <string name="contacts_duplicates">ডুপ্লিকেট খুঁজুন</string>
+    <string name="contacts_import_vcf">VCF আমদানি</string>
+    <string name="contacts_export_vcf">VCF রপ্তানি</string>
+    <string name="contacts_private_vault">প্রাইভেট ভল্ট</string>
+    <string name="contacts_groups">গ্রুপসমূহ</string>
+    <string name="contacts_custom_ringtone">কাস্টম রিংটোন</string>
+    <string name="contacts_notes">পরিচিতি নোট</string>
+
+    <!-- Call History -->
+    <string name="recents_filter_all">সব</string>
+    <string name="recents_filter_incoming">আগত</string>
+    <string name="recents_filter_outgoing">বহির্গত</string>
+    <string name="recents_filter_missed">মিসড</string>
+    <string name="recents_filter_rejected">প্রত্যাখ্যাত</string>
+    <string name="recents_empty">এই ফিল্টারে কোনো কল ইতিহাস নেই।</string>
+    <string name="recents_delete_selected">নির্বাচিত মুছুন</string>
+    <string name="recents_export">ইতিহাস রপ্তানি</string>
+    <string name="recents_add_note">কল নোট</string>
+    <string name="recents_add_reminder">রিমাইন্ডার দিন</string>
+
+    <!-- Active & Incoming Call -->
+    <string name="incall_incoming">আগত সিম কল</string>
+    <string name="incall_dialing">ডায়াল করা হচ্ছে…</string>
+    <string name="incall_connecting">সংযোগ করা হচ্ছে…</string>
+    <string name="incall_on_hold">হোল্ডে আছে</string>
+    <string name="incall_ended">কল শেষ হয়েছে</string>
+    <string name="incall_answer">উত্তর দিন</string>
+    <string name="incall_reject">প্রত্যাখ্যান</string>
+    <string name="incall_end">কল কাটুন</string>
+    <string name="incall_mute">মিউট</string>
+    <string name="incall_speaker">স্পিকার</string>
+    <string name="incall_bluetooth">অডিও</string>
+    <string name="incall_hold">হোল্ড</string>
+    <string name="incall_keypad">কিপ্যাড</string>
+    <string name="incall_swap">অদলবদল</string>
+    <string name="incall_merge">একত্রিত</string>
+    <string name="incall_quick_sms">দ্রুত এসএমএস</string>
+    <string name="incall_swipe_hint">উত্তর দিতে ডানে, কাটতে বামে সোয়াইপ করুন</string>
+
+    <!-- Settings Categories (12 Categories) -->
+    <string name="settings_appearance">থিম ও ডিজাইন</string>
+    <string name="settings_dialpad">ডায়ালপ্যাড ও T9</string>
+    <string name="settings_calling">কলিং ও ডুয়াল সিম</string>
+    <string name="settings_contacts">পরিচিতি ও ভল্ট</string>
+    <string name="settings_call_history">কল ইতিহাস ও পরিসংখ্যান</string>
+    <string name="settings_caller_screen">কলার স্ক্রিন</string>
+    <string name="settings_privacy">গোপনীয়তা ও ব্লকিং</string>
+    <string name="settings_notifications">নোটিফিকেশন ও রিমাইন্ডার</string>
+    <string name="settings_automation">স্মার্ট অটোমেশন</string>
+    <string name="settings_backup">ব্যাকআপ ও রিস্টোর</string>
+    <string name="settings_language">ভাষা</string>
+    <string name="settings_about">DialMe সম্পর্কে</string>
+
+    <!-- Language & Privacy -->
+    <string name="language_system">সিস্টেম ডিফল্ট</string>
+    <string name="language_english">English</string>
+    <string name="language_bengali">বাংলা (Bengali)</string>
+    <string name="app_lock_title">DialMe লক করা</string>
+    <string name="app_lock_subtitle">ডায়ালার খুলতে বায়োমেট্রিক বা পিন ব্যবহার করুন</string>
+    <string name="app_lock_unlock">আনলক করুন</string>
+
+    <!-- Actions -->
+    <string name="action_save">সংরক্ষণ</string>
+    <string name="action_cancel">বাতিল</string>
+    <string name="action_delete">মুছুন</string>
+    <string name="action_reset">ডিফল্ট রিসেট</string>
+    <string name="action_export">রপ্তানি</string>
+    <string name="action_import">আমদানি</string>
+    <string name="action_block">নম্বর ব্লক করুন</string>
+    <string name="action_unblock">আনব্লক</string>
+</resources>

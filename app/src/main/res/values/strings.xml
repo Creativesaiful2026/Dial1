@@ -1,0 +1,112 @@
+<resources>
+    <string name="app_name">DialMe</string>
+    <string name="app_tagline">Your Dialer. Your Style.</string>
+
+    <!-- Main Navigation Tabs -->
+    <string name="nav_favorites">Favorites</string>
+    <string name="nav_contacts">Contacts</string>
+    <string name="nav_recents">Recents</string>
+    <string name="nav_dialpad">Dialpad</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Dialpad & Calling -->
+    <string name="dialpad_enter_number">Enter phone number</string>
+    <string name="dialpad_paste_clipboard">Paste %1$s</string>
+    <string name="dialpad_call">Call</string>
+    <string name="dialpad_choose_sim">Choose SIM</string>
+    <string name="dialpad_enable_dual_sim">Enable Phone access for Dual SIM</string>
+    <string name="dialpad_speed_dial">Speed Dial</string>
+    <string name="dialpad_voicemail">Voicemail</string>
+    <string name="dialpad_backspace">Backspace</string>
+    <string name="dialpad_add_contact">Save number</string>
+    <string name="dialpad_send_sms">Message</string>
+    <string name="dialpad_no_t9_matches">No matching contacts for \"%1$s\"</string>
+    <string name="dialpad_t9_hint">Tap digits to search contacts by T9 name or number</string>
+
+    <!-- Default Dialer & Permissions -->
+    <string name="role_dialer_banner_title">Set DialMe as Default Phone App</string>
+    <string name="role_dialer_banner_desc">Required for real SIM calling, custom incoming caller screens, and system call controls.</string>
+    <string name="role_dialer_cta">Set Default</string>
+    <string name="role_screening_cta">Enable Call Screening</string>
+    <string name="permissions_needed_title">Permissions Needed</string>
+    <string name="permissions_contacts_desc">Allow Contacts access to view favorites, search via T9, and identify callers.</string>
+    <string name="permissions_call_log_desc">Allow Call Log access to view recent calls, missed alerts, and statistics.</string>
+    <string name="permissions_grant">Grant Access</string>
+    <string name="permissions_open_settings">App Settings</string>
+
+    <!-- Contacts -->
+    <string name="contacts_search_hint">Search contacts or numbers</string>
+    <string name="contacts_new">New Contact</string>
+    <string name="contacts_favorites_empty">No favorite contacts yet. Star any contact for instant one-tap calling.</string>
+    <string name="contacts_empty">No contacts found.</string>
+    <string name="contacts_duplicates">Find Duplicates</string>
+    <string name="contacts_import_vcf">Import VCF</string>
+    <string name="contacts_export_vcf">Export VCF</string>
+    <string name="contacts_private_vault">Private Vault</string>
+    <string name="contacts_groups">Groups</string>
+    <string name="contacts_custom_ringtone">Custom Ringtone</string>
+    <string name="contacts_notes">Contact Notes</string>
+
+    <!-- Call History -->
+    <string name="recents_filter_all">All</string>
+    <string name="recents_filter_incoming">Incoming</string>
+    <string name="recents_filter_outgoing">Outgoing</string>
+    <string name="recents_filter_missed">Missed</string>
+    <string name="recents_filter_rejected">Rejected</string>
+    <string name="recents_empty">No call history entries match this filter.</string>
+    <string name="recents_delete_selected">Delete Selected</string>
+    <string name="recents_export">Export History</string>
+    <string name="recents_add_note">Call Note</string>
+    <string name="recents_add_reminder">Remind Me</string>
+
+    <!-- Active & Incoming Call -->
+    <string name="incall_incoming">Incoming SIM Call</string>
+    <string name="incall_dialing">Dialing…</string>
+    <string name="incall_connecting">Connecting…</string>
+    <string name="incall_on_hold">On Hold</string>
+    <string name="incall_ended">Call Ended</string>
+    <string name="incall_answer">Answer</string>
+    <string name="incall_reject">Decline</string>
+    <string name="incall_end">End Call</string>
+    <string name="incall_mute">Mute</string>
+    <string name="incall_speaker">Speaker</string>
+    <string name="incall_bluetooth">Audio</string>
+    <string name="incall_hold">Hold</string>
+    <string name="incall_keypad">Keypad</string>
+    <string name="incall_swap">Swap</string>
+    <string name="incall_merge">Merge</string>
+    <string name="incall_quick_sms">Quick SMS</string>
+    <string name="incall_swipe_hint">Swipe right to answer, left to decline</string>
+
+    <!-- Settings Categories (12 Categories) -->
+    <string name="settings_appearance">Appearance &amp; Theme</string>
+    <string name="settings_dialpad">Dialpad &amp; T9</string>
+    <string name="settings_calling">Calling &amp; Dual SIM</string>
+    <string name="settings_contacts">Contacts &amp; Vault</string>
+    <string name="settings_call_history">Call History &amp; Stats</string>
+    <string name="settings_caller_screen">Incoming Caller Screen</string>
+    <string name="settings_privacy">Privacy &amp; Blocking</string>
+    <string name="settings_notifications">Notifications &amp; Reminders</string>
+    <string name="settings_automation">Smart Automation</string>
+    <string name="settings_backup">Backup &amp; Restore</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_about">About DialMe</string>
+
+    <!-- Language & Privacy -->
+    <string name="language_system">System Default</string>
+    <string name="language_english">English</string>
+    <string name="language_bengali">বাংলা (Bengali)</string>
+    <string name="app_lock_title">DialMe Locked</string>
+    <string name="app_lock_subtitle">Unlock with biometrics or device PIN to access your dialer</string>
+    <string name="app_lock_unlock">Unlock DialMe</string>
+
+    <!-- Actions -->
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_reset">Reset Defaults</string>
+    <string name="action_export">Export</string>
+    <string name="action_import">Import</string>
+    <string name="action_block">Block Number</string>
+    <string name="action_unblock">Unblock</string>
+</resources>

@@ -1,0 +1,6 @@
+{
+  "name": "DialMe",
+  "description": "Your Dialer. Your Style. Modern, privacy-focused, offline-first customizable Android SIM dialer.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
