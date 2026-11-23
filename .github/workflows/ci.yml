@@ -21,7 +21,7 @@ jobs:
           java-version: "21"
 
       - name: Cache Gradle and Dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.gradle/caches
@@ -52,7 +52,14 @@ jobs:
           fi
           echo "ANDROID_HOME=$SDK_DIR" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK_DIR" >> "$GITHUB_ENV"
-          SDKMANAGER="$(find -L "$SDK_DIR" -name sdkmanager -type f 2>/dev/null | head -n 1 || true)"
+
+          SDKMANAGER=""
+          if [ -x "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" ]; then
+            SDKMANAGER="$SDK_DIR/cmdline-tools/latest/bin/sdkmanager"
+          else
+            SDKMANAGER="$(find -L "$SDK_DIR/cmdline-tools" -name sdkmanager -type f 2>/dev/null | head -n 1 || true)"
+          fi
+
           if [ -z "$SDKMANAGER" ]; then
             mkdir -p "$SDK_DIR/cmdline-tools"
             curl -fsSL "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" -o /tmp/cmdline-tools.zip
@@ -62,39 +69,86 @@ jobs:
             rm -rf /tmp/cmdline-tools.zip /tmp/cmdline-tools-extract
             SDKMANAGER="$SDK_DIR/cmdline-tools/latest/bin/sdkmanager"
           fi
-          yes | "$SDKMANAGER" --sdk_root="$SDK_DIR" --licenses > /dev/null || true
-          yes | "$SDKMANAGER" --sdk_root="$SDK_DIR" "platform-tools" "platforms;android-36.1" "build-tools;36.0.0"
+
+          yes | "$SDKMANAGER" --sdk_root="$SDK_DIR" --licenses > /dev/null 2>&1 || true
+          set +e
+          yes | "$SDKMANAGER" --sdk_root="$SDK_DIR" "platform-tools" "platforms;android-36.1" "build-tools;36.0.0" > /tmp/sdk.log 2>&1
+          SDK_EXIT=${PIPESTATUS[1]}
+          cat /tmp/sdk.log
+          if [ "$SDK_EXIT" -ne 0 ]; then
+            SUMMARY=$(tail -n 12 /tmp/sdk.log | tr '\n' ' ')
+            echo "::error title=Android SDK setup failed::$SUMMARY"
+            exit "$SDK_EXIT"
+          fi
 
       - name: Prepare debug keystore
         run: |
           if [ ! -f debug.keystore ] && [ -f debug.keystore.base64 ]; then
             base64 --decode debug.keystore.base64 > debug.keystore
           fi
+          if [ ! -f debug.keystore ]; then
+            echo "::error title=Missing debug.keystore::Neither debug.keystore nor debug.keystore.base64 was found."
+            exit 1
+          fi
 
       - name: Build Debug APK
         id: build_apk
-        run: gradle assembleDebug --max-workers=2 -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -Djava.awt.headless=true" --console=plain --stacktrace
+        run: |
+          set +e
+          gradle assembleDebug --max-workers=2 -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -Djava.awt.headless=true" --console=plain --stacktrace 2>&1 | tee /tmp/apk-build.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            SUMMARY=$(grep -A 8 -E "FAILURE:|What went wrong:|Execution failed|Caused by:" /tmp/apk-build.log | head -n 20 | tr '\n' ' ')
+            if [ -z "$SUMMARY" ]; then
+              SUMMARY=$(tail -n 15 /tmp/apk-build.log | tr '\n' ' ')
+            fi
+            echo "::error title=Build Debug APK failed::$SUMMARY"
+            exit "$EXIT_CODE"
+          fi
 
       - name: Upload Debug APK
         if: steps.build_apk.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: DialMe-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
 
       - name: Run Unit & Robolectric Tests
-        run: gradle testDebugUnitTest --max-workers=2 -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -Djava.awt.headless=true" --console=plain --stacktrace
+        run: |
+          set +e
+          gradle testDebugUnitTest --max-workers=2 -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -Djava.awt.headless=true" --console=plain --stacktrace 2>&1 | tee /tmp/test-build.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            SUMMARY=$(grep -A 8 -E "FAILURE:|What went wrong:|Execution failed|FAILED|Caused by:" /tmp/test-build.log | head -n 20 | tr '\n' ' ')
+            if [ -z "$SUMMARY" ]; then
+              SUMMARY=$(tail -n 15 /tmp/test-build.log | tr '\n' ' ')
+            fi
+            echo "::error title=Unit Tests failed::$SUMMARY"
+            exit "$EXIT_CODE"
+          fi
 
       - name: Run Android Lint
-        run: gradle lintDebug --max-workers=2 -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -Djava.awt.headless=true" --console=plain --stacktrace
+        run: |
+          set +e
+          gradle lintDebug --max-workers=2 -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -Djava.awt.headless=true" --console=plain --stacktrace 2>&1 | tee /tmp/lint-build.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            SUMMARY=$(grep -A 8 -E "FAILURE:|What went wrong:|Execution failed|Error:" /tmp/lint-build.log | head -n 20 | tr '\n' ' ')
+            if [ -z "$SUMMARY" ]; then
+              SUMMARY=$(tail -n 15 /tmp/lint-build.log | tr '\n' ' ')
+            fi
+            echo "::error title=Android Lint failed::$SUMMARY"
+            exit "$EXIT_CODE"
+          fi
 
       - name: Upload Test Reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: DialMe-test-reports
           path: |
             app/build/reports/
             app/build/test-results/
+          if-no-files-found: ignore
           retention-days: 14
