@@ -73,7 +73,7 @@ jobs:
 
       - name: Build Debug APK
         id: build_apk
-        run: gradle assembleDebug --stacktrace
+        run: gradle assembleDebug --max-workers=2 -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -Djava.awt.headless=true" --console=plain --stacktrace
 
       - name: Upload Debug APK
         if: steps.build_apk.outcome == 'success'
@@ -84,10 +84,10 @@ jobs:
           retention-days: 30
 
       - name: Run Unit & Robolectric Tests
-        run: gradle testDebugUnitTest --stacktrace
+        run: gradle testDebugUnitTest --max-workers=2 -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -Djava.awt.headless=true" --console=plain --stacktrace
 
       - name: Run Android Lint
-        run: gradle lintDebug --stacktrace
+        run: gradle lintDebug --max-workers=2 -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -Djava.awt.headless=true" --console=plain --stacktrace
 
       - name: Upload Test Reports
         if: always()

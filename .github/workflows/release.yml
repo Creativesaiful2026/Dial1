@@ -85,7 +85,7 @@ jobs:
           KEYSTORE_PATH: ${{ github.workspace }}/my-upload-key.jks
           STORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-        run: gradle testReleaseUnitTest assembleRelease --stacktrace
+        run: gradle testReleaseUnitTest assembleRelease --max-workers=2 -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -Djava.awt.headless=true" --console=plain --stacktrace
 
       - name: Generate SHA-256 Checksum
         run: |
