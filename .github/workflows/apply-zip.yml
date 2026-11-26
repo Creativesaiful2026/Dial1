@@ -1,0 +1,37 @@
+name: Apply uploaded zip
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Unzip and copy files
+        run: |
+          ZIP=$(ls Dial1-v*.zip | head -n 1)
+          test -n "$ZIP" || { echo "No zip found in repo root"; exit 1; }
+          mkdir /tmp/x
+          unzip -q "$ZIP" -d /tmp/x
+          SRC=$(find /tmp/x -mindepth 1 -maxdepth 1 -type d | head -n 1)
+          rsync -a --exclude '.github' --exclude '.git' "$SRC"/ ./
+          rm -f "$ZIP"
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Apply v6 from uploaded zip" || echo "nothing to commit"
+          git push
+
+      - name: Start build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml
