@@ -89,9 +89,9 @@ fun BlockingAndPrivacyScreen(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            FilterChip(selected = selectedSection == 0, onClick = { selectedSection = 0 }, label = { Text("Block Rules") })
-            FilterChip(selected = selectedSection == 1, onClick = { selectedSection = 1 }, label = { Text("Blocked Log") })
-            FilterChip(selected = selectedSection == 2, onClick = { selectedSection = 2 }, label = { Text("Private Vault") })
+            FilterChip(selected = selectedSection == 0, onClick = { selectedSection = 0 }, label = { Text(stringResource(R.string.ui_block_rules)) })
+            FilterChip(selected = selectedSection == 1, onClick = { selectedSection = 1 }, label = { Text(stringResource(R.string.ui_blocked_log)) })
+            FilterChip(selected = selectedSection == 2, onClick = { selectedSection = 2 }, label = { Text(stringResource(R.string.ui_private_vault)) })
         }
 
         LazyColumn(
@@ -119,6 +119,13 @@ fun BlockingAndPrivacyScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = cs.onSurfaceVariant
                             )
+                            if (!permissions.hasReadContacts && rules.any { it.ruleType == BlockRuleType.NON_CONTACT && it.isEnabled }) {
+                                Text(
+                                    stringResource(R.string.block_non_contact_needs_permission),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = cs.error
+                                )
+                            }
                             if (!permissions.isCallScreeningHeld) {
                                 Button(onClick = onRequestCallScreeningRole) {
                                     Text(stringResource(R.string.role_screening_cta))
@@ -133,8 +140,8 @@ fun BlockingAndPrivacyScreen(
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Privacy Mode", style = MaterialTheme.typography.titleMedium)
-                                    Text("Mask caller names & numbers in Recents list", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
+                                    Text(stringResource(R.string.ui_privacy_mode), style = MaterialTheme.typography.titleMedium)
+                                    Text(stringResource(R.string.ui_mask_caller_names_numbers_in_recents), style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
                                 }
                                 Switch(
                                     checked = config.privacyModeEnabled,
@@ -143,13 +150,25 @@ fun BlockingAndPrivacyScreen(
                             }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Biometric App Lock", style = MaterialTheme.typography.titleMedium)
-                                    Text("Require fingerprint/PIN when opening DialMe", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
+                                    Text(stringResource(R.string.ui_biometric_app_lock), style = MaterialTheme.typography.titleMedium)
+                                    Text(stringResource(R.string.ui_require_fingerprint_pin_when_opening), style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
                                 }
                                 Switch(
                                     checked = config.appLockEnabled,
                                     onCheckedChange = { v -> viewModel.updateConfig { it.copy(appLockEnabled = v) } }
                                 )
+                            }
+                            if (config.appLockEnabled) {
+                                Text(stringResource(R.string.app_lock_timeout_label), style = MaterialTheme.typography.titleMedium)
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    listOf(0 to R.string.lock_timeout_immediately, 30 to R.string.lock_timeout_30s, 60 to R.string.lock_timeout_1m, 300 to R.string.lock_timeout_5m).forEach { (sec, label) ->
+                                        FilterChip(
+                                            selected = config.appLockTimeoutSec == sec,
+                                            onClick = { viewModel.updateConfig { it.copy(appLockTimeoutSec = sec) } },
+                                            label = { Text(stringResource(label)) }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -161,11 +180,11 @@ fun BlockingAndPrivacyScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Active Block Rules (${rules.size})", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.ui_active_block_rules, rules.size), style = MaterialTheme.typography.titleMedium)
                         Button(onClick = { showAddRuleDialog = true }) {
                             Icon(Icons.Rounded.Add, null, Modifier.size(16.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Add Rule")
+                            Text(stringResource(R.string.ui_add_rule))
                         }
                     }
                 }
@@ -203,9 +222,9 @@ fun BlockingAndPrivacyScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Screened & Blocked Calls (${blockedEvents.size})", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.ui_screened_blocked_calls, blockedEvents.size), style = MaterialTheme.typography.titleMedium)
                         if (blockedEvents.isNotEmpty()) {
-                            TextButton(onClick = { viewModel.clearBlockedEvents() }) { Text("Clear Log") }
+                            TextButton(onClick = { viewModel.clearBlockedEvents() }) { Text(stringResource(R.string.ui_clear_log)) }
                         }
                     }
                 }
@@ -230,11 +249,11 @@ fun BlockingAndPrivacyScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Rounded.Lock, null, tint = cs.primary)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Private Contact Vault", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                                Text(stringResource(R.string.ui_private_contact_vault), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                                 Button(onClick = { showAddPrivateDialog = true }) {
                                     Icon(Icons.Rounded.Add, null, Modifier.size(16.dp))
                                     Spacer(Modifier.width(4.dp))
-                                    Text("Add")
+                                    Text(stringResource(R.string.ui_add))
                                 }
                             }
                             Text(
@@ -275,7 +294,7 @@ fun BlockingAndPrivacyScreen(
         var label by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showAddRuleDialog = false },
-            title = { Text("Add Block Rule") },
+            title = { Text(stringResource(R.string.ui_add_block_rule)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -295,7 +314,7 @@ fun BlockingAndPrivacyScreen(
                             singleLine = true
                         )
                     }
-                    OutlinedTextField(value = label, onValueChange = { label = it }, label = { Text("Label (optional)") }, singleLine = true)
+                    OutlinedTextField(value = label, onValueChange = { label = it }, label = { Text(stringResource(R.string.ui_label_optional)) }, singleLine = true)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         BlockAction.entries.forEach { a ->
                             FilterChip(
@@ -335,12 +354,12 @@ fun BlockingAndPrivacyScreen(
         var notes by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showAddPrivateDialog = false },
-            title = { Text("Add Private Contact") },
+            title = { Text(stringResource(R.string.ui_add_private_contact)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, singleLine = true)
-                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Phone Number") }, singleLine = true)
-                    OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Notes") })
+                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.ui_name)) }, singleLine = true)
+                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text(stringResource(R.string.ui_phone_number)) }, singleLine = true)
+                    OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text(stringResource(R.string.ui_notes)) })
                 }
             },
             confirmButton = {

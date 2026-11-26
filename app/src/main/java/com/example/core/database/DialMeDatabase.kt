@@ -36,12 +36,22 @@ abstract class DialMeDatabase : RoomDatabase() {
     abstract fun customThemeDao(): CustomThemeDao
 
     companion object {
+        @Volatile
+        private var instance: DialMeDatabase? = null
+
+        /**
+         * Returns the single shared database instance. Previously every caller
+         * (app container, call screening service, reminder worker) created its own
+         * Room instance for the same file and never closed it.
+         */
         fun build(context: Context): DialMeDatabase {
-            return Room.databaseBuilder(
-                context.applicationContext,
-                DialMeDatabase::class.java,
-                "dialme.db"
-            ).build()
+            return instance ?: synchronized(this) {
+                instance ?: Room.databaseBuilder(
+                    context.applicationContext,
+                    DialMeDatabase::class.java,
+                    "dialme.db"
+                ).build().also { instance = it }
+            }
         }
     }
 }

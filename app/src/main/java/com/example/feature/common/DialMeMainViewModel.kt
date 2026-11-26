@@ -1,5 +1,6 @@
 package com.example.feature.common
 
+import com.example.R
 import android.content.Context
 import android.net.Uri
 import androidx.appcompat.app.AppCompatDelegate
@@ -200,6 +201,26 @@ class DialMeMainViewModel(
         _isUnlocked.value = true
     }
 
+    private var backgroundedAtMs: Long = 0L
+
+    /** Call when the app leaves the foreground. */
+    fun onAppBackgrounded() {
+        backgroundedAtMs = android.os.SystemClock.elapsedRealtime()
+    }
+
+    /**
+     * Call when the app returns to the foreground. Re-locks if app lock is on and the
+     * app was away longer than [graceMs] (so permission dialogs do not force a re-auth).
+     */
+    fun onAppForegrounded(graceMs: Long = config.value.appLockTimeoutSec.coerceAtLeast(0) * 1000L) {
+        if (backgroundedAtMs == 0L) return
+        val away = android.os.SystemClock.elapsedRealtime() - backgroundedAtMs
+        backgroundedAtMs = 0L
+        if (config.value.appLockEnabled && away > graceMs) {
+            _isUnlocked.value = false
+        }
+    }
+
     fun updateClipboardCandidate(candidate: String?) {
         _clipboardCandidate.value = candidate
     }
@@ -286,21 +307,21 @@ class DialMeMainViewModel(
     fun saveSpeedDial(slot: Int, name: String, number: String, lookupKey: String? = null) {
         viewModelScope.launch {
             localRepo.saveSpeedDial(slot, name, number, lookupKey)
-            notify("Speed dial #$slot saved")
+            notifyRes(R.string.notify_speed_dial_saved, slot)
         }
     }
 
     fun clearSpeedDial(slot: Int) {
         viewModelScope.launch {
             localRepo.clearSpeedDial(slot)
-            notify("Speed dial #$slot cleared")
+            notifyRes(R.string.notify_speed_dial_cleared, slot)
         }
     }
 
     fun toggleFavorite(contact: ContactItem) {
         viewModelScope.launch {
             val ok = contactsRepo.toggleFavorite(contact.contactId, !contact.isStarred)
-            if (!ok) notify("Write Contacts permission required")
+            if (!ok) notifyRes(R.string.notify_write_contacts_required)
         }
     }
 
@@ -346,11 +367,11 @@ class DialMeMainViewModel(
         viewModelScope.launch {
             val text = readTextFromUri(uri)
             if (text.isNullOrBlank()) {
-                notify("Could not read VCF file")
+                notifyRes(R.string.notify_vcf_read_failed)
                 return@launch
             }
             val count = contactsRepo.importContactsFromVcf(text)
-            notify("Imported $count contacts")
+            notifyRes(R.string.notify_imported_contacts, count)
         }
     }
 
@@ -372,7 +393,7 @@ class DialMeMainViewModel(
     fun addBlockRule(rule: BlockRule) {
         viewModelScope.launch {
             localRepo.addBlockRule(rule)
-            notify("Block rule added")
+            notifyRes(R.string.notify_block_rule_added)
         }
     }
 
@@ -392,7 +413,7 @@ class DialMeMainViewModel(
         viewModelScope.launch {
             if (noteText.isNotBlank()) {
                 localRepo.saveCallNote(number, noteText, callLogId, lookupKey)
-                notify("Call note saved")
+                notifyRes(R.string.notify_call_note_saved)
             }
         }
     }
@@ -404,7 +425,7 @@ class DialMeMainViewModel(
     fun scheduleReminder(displayName: String, number: String, note: String, delayMinutes: Long) {
         viewModelScope.launch {
             localRepo.scheduleReminder(displayName, number, note, delayMinutes)
-            notify("Callback reminder scheduled in ${delayMinutes}m")
+            notifyRes(R.string.notify_reminder_scheduled, delayMinutes)
         }
     }
 
@@ -423,7 +444,7 @@ class DialMeMainViewModel(
     fun addPrivateContact(name: String, phone: String, notes: String) {
         viewModelScope.launch {
             localRepo.addPrivateContact(name, phone, notes)
-            notify("Saved to Private Vault")
+            notifyRes(R.string.notify_saved_to_vault)
         }
     }
 
@@ -434,7 +455,7 @@ class DialMeMainViewModel(
     fun addAutomationRule(rule: AutomationRule) {
         viewModelScope.launch {
             localRepo.addAutomationRule(rule)
-            notify("Automation rule created")
+            notifyRes(R.string.notify_automation_created)
         }
     }
 
@@ -482,7 +503,7 @@ class DialMeMainViewModel(
                 fontFamily = font
             )
         }
-        notify("Applied theme \"${preset.name}\"")
+        notifyRes(R.string.notify_theme_applied, preset.name)
     }
 
     fun saveCurrentAsPreset(name: String) {
@@ -503,7 +524,7 @@ class DialMeMainViewModel(
                     fontFamilyKey = cfg.fontFamily.name
                 )
             )
-            notify("Theme preset saved")
+            notifyRes(R.string.notify_theme_preset_saved)
         }
     }
 
@@ -516,11 +537,36 @@ class DialMeMainViewModel(
                     dest.outputStream().use { output -> input.copyTo(output) }
                 }
                 prefsRepo.updateConfig { it.copy(customBackgroundPath = dest.absolutePath) }
-                notify("Custom background applied")
+                notifyRes(R.string.notify_background_applied)
             } catch (_: Exception) {
-                notify("Failed to import background image")
+                notifyRes(R.string.notify_background_failed)
             }
         }
+    }
+
+    fun importCallerBackground(uri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val dir = File(appContext.filesDir, "themes").apply { mkdirs() }
+                // Unique file name so the image loader never shows a stale cached picture.
+                val dest = File(dir, "caller_bg_${System.currentTimeMillis()}.jpg")
+                appContext.contentResolver.openInputStream(uri)?.use { input ->
+                    dest.outputStream().use { output -> input.copyTo(output) }
+                }
+                val old = config.value.callerBackgroundPath
+                prefsRepo.updateConfig { it.copy(callerBackgroundPath = dest.absolutePath) }
+                old?.let { runCatching { File(it).delete() } }
+                notifyRes(R.string.notify_background_applied)
+            } catch (_: Exception) {
+                notifyRes(R.string.notify_background_failed)
+            }
+        }
+    }
+
+    fun clearCallerBackground() {
+        val old = config.value.callerBackgroundPath
+        updateConfig { it.copy(callerBackgroundPath = null) }
+        old?.let { runCatching { File(it).delete() } }
     }
 
     fun clearCustomBackground() {
@@ -555,7 +601,7 @@ class DialMeMainViewModel(
                 localRepo.saveCustomTheme(preset)
                 applyThemePreset(preset)
             } else {
-                notify("Invalid theme JSON file")
+                notifyRes(R.string.notify_theme_json_invalid)
             }
         }
     }
@@ -579,7 +625,7 @@ class DialMeMainViewModel(
     fun resetAllDefaults() {
         viewModelScope.launch {
             prefsRepo.resetDefaults()
-            notify("Preferences restored to defaults")
+            notifyRes(R.string.notify_prefs_restored)
         }
     }
 
@@ -588,6 +634,21 @@ class DialMeMainViewModel(
 
     fun notify(msg: String) {
         _snackbarMessage.value = msg
+    }
+
+    /** Posts a snackbar message in the language chosen inside the app. */
+    fun notifyRes(@androidx.annotation.StringRes resId: Int, vararg args: Any) {
+        _snackbarMessage.value = localizedContext().getString(resId, *args)
+    }
+
+    private fun localizedContext(): Context {
+        val tag = config.value.languageTag
+        if (tag == "system" || tag.isBlank()) return appContext
+        return runCatching {
+            val cfg = android.content.res.Configuration(appContext.resources.configuration)
+            cfg.setLocale(java.util.Locale.forLanguageTag(tag))
+            appContext.createConfigurationContext(cfg)
+        }.getOrDefault(appContext)
     }
 
     fun clearSnackbar() {

@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
@@ -100,7 +101,7 @@ fun DialMeTheme(
     } else {
         lightColorScheme(
             primary = primaryAccent,
-            onPrimary = Color.White,
+            onPrimary = if (primaryAccent.luminance() > 0.5f) Color(0xFF041214) else Color.White,
             primaryContainer = primaryAccent.copy(alpha = 0.14f),
             onPrimaryContainer = Color(0xFF042F2E),
             secondary = secondaryAccent,
@@ -138,7 +139,7 @@ fun DialMeTheme(
     val font = resolveFontFamily(config.fontFamily)
     val scale = config.fontScale.coerceIn(0.85f, 1.3f)
 
-    val typography = Typography(
+    val typography = Typography().copy(
         displayLarge = TextStyle(fontFamily = SpaceGroteskFontFamily, fontWeight = FontWeight.Bold, fontSize = (36 * scale).sp, lineHeight = (44 * scale).sp),
         headlineMedium = TextStyle(fontFamily = font, fontWeight = FontWeight.Bold, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp),
         titleLarge = TextStyle(fontFamily = font, fontWeight = FontWeight.SemiBold, fontSize = (20 * scale).sp, lineHeight = (28 * scale).sp),
@@ -146,7 +147,15 @@ fun DialMeTheme(
         bodyLarge = TextStyle(fontFamily = font, fontWeight = FontWeight.Normal, fontSize = (15 * scale).sp, lineHeight = (22 * scale).sp),
         bodyMedium = TextStyle(fontFamily = font, fontWeight = FontWeight.Normal, fontSize = (13.5f * scale).sp, lineHeight = (20 * scale).sp),
         labelLarge = TextStyle(fontFamily = font, fontWeight = FontWeight.SemiBold, fontSize = (13.5f * scale).sp, lineHeight = (18 * scale).sp),
-        labelSmall = TextStyle(fontFamily = font, fontWeight = FontWeight.Medium, fontSize = (11 * scale).sp, lineHeight = (14 * scale).sp)
+        labelSmall = TextStyle(fontFamily = font, fontWeight = FontWeight.Medium, fontSize = (11 * scale).sp, lineHeight = (14 * scale).sp),
+        // Remaining styles previously fell back to the system font, ignoring the chosen family.
+        displayMedium = Typography().displayMedium.copy(fontFamily = font),
+        displaySmall = Typography().displaySmall.copy(fontFamily = font),
+        headlineLarge = Typography().headlineLarge.copy(fontFamily = font),
+        headlineSmall = Typography().headlineSmall.copy(fontFamily = font),
+        titleSmall = Typography().titleSmall.copy(fontFamily = font),
+        bodySmall = Typography().bodySmall.copy(fontFamily = font),
+        labelMedium = Typography().labelMedium.copy(fontFamily = font)
     )
 
     val radius = config.dialpadCornerRadiusDp.coerceIn(8, 32).dp
@@ -160,8 +169,13 @@ fun DialMeTheme(
         MaterialTheme(
             colorScheme = colorScheme,
             typography = typography,
-            shapes = shapes,
-            content = content
-        )
+            shapes = shapes
+        ) {
+            // Text outside a Surface/Scaffold otherwise falls back to black, which vanishes
+            // on dark backgrounds. Always default to the theme's own foreground color.
+            CompositionLocalProvider(LocalContentColor provides colorScheme.onBackground) {
+                content()
+            }
+        }
     }
 }

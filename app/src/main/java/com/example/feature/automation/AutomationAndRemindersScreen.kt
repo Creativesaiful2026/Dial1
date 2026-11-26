@@ -91,12 +91,12 @@ fun AutomationAndRemindersScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Rounded.NotificationsActive, null, tint = cs.primary)
                         Spacer(Modifier.width(8.dp))
-                        Text("Call Reminders (${reminders.size})", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.ui_call_reminders, reminders.size), style = MaterialTheme.typography.titleMedium)
                     }
                     Button(onClick = { showAddReminder = true }) {
                         Icon(Icons.Rounded.Add, null, Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("New")
+                        Text(stringResource(R.string.ui_new))
                     }
                 }
             }
@@ -146,12 +146,12 @@ fun AutomationAndRemindersScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Rounded.AutoAwesome, null, tint = cs.secondary)
                         Spacer(Modifier.width(8.dp))
-                        Text("Local Automation Rules (${rules.size})", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.ui_local_automation_rules, rules.size), style = MaterialTheme.typography.titleMedium)
                     }
                     Button(onClick = { showAddRule = true }) {
                         Icon(Icons.Rounded.Add, null, Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Rule")
+                        Text(stringResource(R.string.ui_rule))
                     }
                 }
             }
@@ -183,8 +183,8 @@ fun AutomationAndRemindersScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Quick SMS Reject Templates", style = MaterialTheme.typography.titleMedium)
-                    TextButton(onClick = { showAddQuickSms = true }) { Text("Add") }
+                    Text(stringResource(R.string.ui_quick_sms_reject_templates), style = MaterialTheme.typography.titleMedium)
+                    TextButton(onClick = { showAddQuickSms = true }) { Text(stringResource(R.string.ui_add)) }
                 }
             }
 
@@ -210,18 +210,18 @@ fun AutomationAndRemindersScreen(
         var note by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showAddReminder = false },
-            title = { Text("Schedule Call Reminder") },
+            title = { Text(stringResource(R.string.ui_schedule_call_reminder)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Contact Name") }, singleLine = true)
-                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Phone Number") }, singleLine = true)
+                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.ui_contact_name)) }, singleLine = true)
+                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text(stringResource(R.string.ui_phone_number)) }, singleLine = true)
                     OutlinedTextField(
                         value = mins,
                         onValueChange = { mins = it.filter { c -> c.isDigit() } },
-                        label = { Text("Delay (minutes)") },
+                        label = { Text(stringResource(R.string.ui_delay_minutes)) },
                         singleLine = true
                     )
-                    OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("Note") })
+                    OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text(stringResource(R.string.ui_note)) })
                 }
             },
             confirmButton = {
@@ -249,11 +249,11 @@ fun AutomationAndRemindersScreen(
         var action by remember { mutableStateOf(AutomationAction.CREATE_CALLBACK_REMINDER) }
         AlertDialog(
             onDismissRequest = { showAddRule = false },
-            title = { Text("New Automation Rule") },
+            title = { Text(stringResource(R.string.ui_new_automation_rule)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Rule Name") }, singleLine = true)
-                    Text("Trigger", style = MaterialTheme.typography.labelLarge)
+                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.ui_rule_name)) }, singleLine = true)
+                    Text(stringResource(R.string.ui_trigger), style = MaterialTheme.typography.labelLarge)
                     AutomationTrigger.entries.forEach { t ->
                         FilterChip(
                             selected = trigger == t,
@@ -261,7 +261,7 @@ fun AutomationAndRemindersScreen(
                             label = { Text(t.name.replace('_', ' ')) }
                         )
                     }
-                    Text("Action", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.ui_action), style = MaterialTheme.typography.labelLarge)
                     AutomationAction.entries.forEach { a ->
                         FilterChip(
                             selected = action == a,
@@ -293,9 +293,9 @@ fun AutomationAndRemindersScreen(
         var text by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showAddQuickSms = false },
-            title = { Text("Add Quick SMS Response") },
+            title = { Text(stringResource(R.string.ui_add_quick_sms_response)) },
             text = {
-                OutlinedTextField(value = text, onValueChange = { text = it }, label = { Text("Message") })
+                OutlinedTextField(value = text, onValueChange = { text = it }, label = { Text(stringResource(R.string.ui_message)) })
             },
             confirmButton = {
                 Button(onClick = {

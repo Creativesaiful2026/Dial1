@@ -20,9 +20,13 @@ class PreferencesRepository(private val context: Context) {
         ignoreUnknownKeys = true
         encodeDefaults = true
         prettyPrint = true
+        // Unknown enum values / nulls fall back to defaults instead of discarding the
+        // entire saved configuration.
+        coerceInputValues = true
     }
 
     private val keyConfigJson = stringPreferencesKey("dialme_config_json")
+    private val keyConfigCorruptBackup = stringPreferencesKey("dialme_config_json_corrupt_backup")
 
     val configFlow: Flow<DialMeConfig> = context.dialMeDataStore.data.map { prefs ->
         val raw = prefs[keyConfigJson]
@@ -37,9 +41,13 @@ class PreferencesRepository(private val context: Context) {
 
     suspend fun updateConfig(transform: (DialMeConfig) -> DialMeConfig) {
         context.dialMeDataStore.edit { prefs ->
-            val current = prefs[keyConfigJson]?.let {
-                runCatching { json.decodeFromString<DialMeConfig>(it) }.getOrNull()
-            } ?: DialMeConfig()
+            val raw = prefs[keyConfigJson]
+            val decoded = raw?.let { runCatching { json.decodeFromString<DialMeConfig>(it) }.getOrNull() }
+            if (raw != null && decoded == null) {
+                // Keep the unreadable config so it is not lost forever when we overwrite it.
+                prefs[keyConfigCorruptBackup] = raw
+            }
+            val current = decoded ?: DialMeConfig()
             val updated = transform(current)
             prefs[keyConfigJson] = json.encodeToString(updated)
         }

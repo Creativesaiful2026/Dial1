@@ -1,5 +1,11 @@
 package com.example.feature.callhistory
 
+import androidx.compose.runtime.DisposableEffect
+import com.example.core.telecom.CallRecorder
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Stop
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import android.content.Intent
 import android.provider.ContactsContract
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -94,6 +100,7 @@ fun CallHistoryScreen(
     val filter by viewModel.historyFilter.collectAsStateWithLifecycle()
     val searchQuery by viewModel.historySearch.collectAsStateWithLifecycle()
     val notes by viewModel.callNotes.collectAsStateWithLifecycle()
+    val allHistory by viewModel.callHistory.collectAsStateWithLifecycle()
 
     var selectedEntry by remember { mutableStateOf<CallLogItem?>(null) }
     var multiSelectIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
@@ -131,7 +138,7 @@ fun CallHistoryScreen(
                     IconButton(onClick = { multiSelectIds = emptySet() }) {
                         Icon(Icons.Rounded.Close, "Cancel selection")
                     }
-                    Text("${multiSelectIds.size} selected", modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.ui_selected, multiSelectIds.size), modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
                     TextButton(onClick = {
                         viewModel.deleteCallLogs(multiSelectIds)
                         multiSelectIds = emptySet()
@@ -152,7 +159,7 @@ fun CallHistoryScreen(
                     value = searchQuery,
                     onValueChange = viewModel::setHistorySearch,
                     leadingIcon = { Icon(Icons.Rounded.Search, null) },
-                    placeholder = { Text("Search recents") },
+                    placeholder = { Text(stringResource(R.string.ui_search_recents)) },
                     singleLine = true,
                     modifier = Modifier.weight(1f).testTag("history_search_field")
                 )
@@ -195,8 +202,22 @@ fun CallHistoryScreen(
                 )
             }
         } else {
-            val grouped = remember(history) {
-                history.groupBy { DateTimeUtils.formatDateBucket(it.timestampMillis) }
+            // One row per number: every call (incoming, outgoing, missed, declined) of the
+            // same number is kept together; the newest call represents the group.
+            val groupMembers = remember(history, config.groupRecentsByNumber) {
+                history.groupBy { numberKey(it) }
+            }
+            val displayList = remember(history, config.groupRecentsByNumber) {
+                if (config.groupRecentsByNumber) {
+                    groupMembers.values
+                        .mapNotNull { list -> list.maxByOrNull { it.timestampMillis } }
+                        .sortedByDescending { it.timestampMillis }
+                } else {
+                    history
+                }
+            }
+            val grouped = remember(displayList) {
+                displayList.groupBy { DateTimeUtils.formatDateBucket(it.timestampMillis) }
             }
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -212,7 +233,13 @@ fun CallHistoryScreen(
                         )
                     }
                     items(entries, key = { it.id }) { entry ->
-                        val isSelected = multiSelectIds.contains(entry.id)
+                        val members = if (config.groupRecentsByNumber) {
+                            groupMembers[numberKey(entry)].orEmpty().ifEmpty { listOf(entry) }
+                        } else {
+                            listOf(entry)
+                        }
+                        val memberIds = members.map { it.id }.toSet()
+                        val isSelected = memberIds.all { multiSelectIds.contains(it) }
                         val displayName = if (config.privacyModeEnabled) {
                             "Private Entry"
                         } else {
@@ -232,16 +259,16 @@ fun CallHistoryScreen(
                                     onClick = {
                                         if (multiSelectIds.isNotEmpty()) {
                                             multiSelectIds = if (isSelected) {
-                                                multiSelectIds - entry.id
+                                                multiSelectIds - memberIds
                                             } else {
-                                                multiSelectIds + entry.id
+                                                multiSelectIds + memberIds
                                             }
                                         } else {
                                             selectedEntry = entry
                                         }
                                     },
                                     onLongClick = {
-                                        multiSelectIds = multiSelectIds + entry.id
+                                        multiSelectIds = multiSelectIds + memberIds
                                     }
                                 )
                         ) {
@@ -265,7 +292,15 @@ fun CallHistoryScreen(
                                             overflow = TextOverflow.Ellipsis,
                                             modifier = Modifier.weight(1f, fill = false)
                                         )
-                                        if (entry.hasNote) {
+                                        if (members.size > 1) {
+                                            Spacer(Modifier.width(6.dp))
+                                            Text(
+                                                text = "(${members.size})",
+                                                style = MaterialTheme.typography.labelLarge,
+                                                color = cs.primary
+                                            )
+                                        }
+                                        if (members.any { it.hasNote }) {
                                             Spacer(Modifier.width(6.dp))
                                             Icon(Icons.Rounded.Description, "Has note", tint = cs.primary, modifier = Modifier.size(14.dp))
                                         }
@@ -290,6 +325,24 @@ fun CallHistoryScreen(
                                             overflow = TextOverflow.Ellipsis
                                         )
                                     }
+                                    if (members.size > 1) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.padding(top = 2.dp)
+                                        ) {
+                                            val inCount = members.count { it.direction == CallDirection.INCOMING }
+                                            val outCount = members.count { it.direction == CallDirection.OUTGOING }
+                                            val missCount = members.count { it.direction == CallDirection.MISSED }
+                                            val rejCount = members.count {
+                                                it.direction == CallDirection.REJECTED || it.direction == CallDirection.BLOCKED
+                                            }
+                                            if (inCount > 0) DirectionCount(Icons.AutoMirrored.Rounded.CallReceived, Color(0xFF10B981), inCount)
+                                            if (outCount > 0) DirectionCount(Icons.AutoMirrored.Rounded.CallMade, cs.primary, outCount)
+                                            if (missCount > 0) DirectionCount(Icons.AutoMirrored.Rounded.CallMissed, cs.error, missCount)
+                                            if (rejCount > 0) DirectionCount(Icons.Rounded.Block, Color(0xFFF59E0B), rejCount)
+                                        }
+                                    }
                                 }
                                 if (entry.durationSeconds > 0) {
                                     Text(
@@ -312,9 +365,21 @@ fun CallHistoryScreen(
     // Call Entry Detail Sheet
     selectedEntry?.let { entry ->
         val matchingNotes = notes.filter { it.normalizedNumber == entry.normalizedNumber }
+        val callsForNumber = remember(allHistory, entry.id, config.groupRecentsByNumber) {
+            if (config.groupRecentsByNumber) {
+                allHistory.filter { numberKey(it) == numberKey(entry) }
+                    .sortedByDescending { it.timestampMillis }
+                    .ifEmpty { listOf(entry) }
+            } else {
+                listOf(entry)
+            }
+        }
         ModalBottomSheet(onDismissRequest = { selectedEntry = null }) {
             Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -341,10 +406,52 @@ fun CallHistoryScreen(
                     }
                 }
 
+                if (callsForNumber.size > 1) {
+                    DialMeCard {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                stringResource(R.string.ui_calls, callsForNumber.size),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = cs.primary
+                            )
+                            callsForNumber.forEach { call ->
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    val (icon, tint, labelRes) = when (call.direction) {
+                                        CallDirection.INCOMING -> Triple(Icons.AutoMirrored.Rounded.CallReceived, Color(0xFF10B981), R.string.recents_filter_incoming)
+                                        CallDirection.OUTGOING -> Triple(Icons.AutoMirrored.Rounded.CallMade, cs.primary, R.string.recents_filter_outgoing)
+                                        CallDirection.MISSED -> Triple(Icons.AutoMirrored.Rounded.CallMissed, cs.error, R.string.recents_filter_missed)
+                                        CallDirection.REJECTED, CallDirection.BLOCKED -> Triple(Icons.Rounded.Block, Color(0xFFF59E0B), R.string.recents_filter_rejected)
+                                        CallDirection.VOICEMAIL -> Triple(Icons.Rounded.Call, cs.secondary, R.string.direction_voicemail)
+                                    }
+                                    Icon(icon, null, tint = tint, modifier = Modifier.size(16.dp))
+                                    Spacer(Modifier.width(8.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(stringResource(labelRes), style = MaterialTheme.typography.bodyMedium)
+                                        Text(
+                                            DateTimeUtils.formatFullDateTime(call.timestampMillis),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = cs.onSurfaceVariant
+                                        )
+                                    }
+                                    if (call.durationSeconds > 0) {
+                                        Text(
+                                            DateTimeUtils.formatDurationReadable(call.durationSeconds),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = cs.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                RecordingsSection(entry.normalizedNumber.ifBlank { entry.number })
+
                 if (matchingNotes.isNotEmpty()) {
                     DialMeCard {
                         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("Call Notes", style = MaterialTheme.typography.labelLarge, color = cs.primary)
+                            Text(stringResource(R.string.ui_call_notes), style = MaterialTheme.typography.labelLarge, color = cs.primary)
                             matchingNotes.forEach { n ->
                                 Text("• ${n.noteText}", style = MaterialTheme.typography.bodyMedium)
                             }
@@ -361,19 +468,19 @@ fun CallHistoryScreen(
                 ) {
                     Icon(Icons.Rounded.Call, null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Call ${viewModel.formatForDisplay(entry.number)}")
+                    Text(stringResource(R.string.ui_call, viewModel.formatForDisplay(entry.number)))
                 }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     OutlinedButton(onClick = { noteEntry = entry }, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Rounded.NoteAdd, null, Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Note")
+                        Text(stringResource(R.string.ui_note))
                     }
                     OutlinedButton(onClick = { reminderEntry = entry }, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Rounded.NotificationsActive, null, Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Remind")
+                        Text(stringResource(R.string.ui_remind))
                     }
                 }
 
@@ -409,7 +516,7 @@ fun CallHistoryScreen(
                         Text(stringResource(R.string.action_block))
                     }
                     TextButton(onClick = {
-                        viewModel.deleteCallLogs(setOf(entry.id))
+                        viewModel.deleteCallLogs(callsForNumber.map { it.id }.toSet())
                         selectedEntry = null
                     }) {
                         Icon(Icons.Rounded.Delete, null, Modifier.size(16.dp), tint = cs.error)
@@ -432,7 +539,7 @@ fun CallHistoryScreen(
                 OutlinedTextField(
                     value = noteText,
                     onValueChange = { noteText = it },
-                    label = { Text("Note for ${entry.cachedName ?: entry.number}") },
+                    label = { Text(stringResource(R.string.ui_note_for, entry.cachedName ?: entry.number)) },
                     minLines = 3
                 )
             },
@@ -460,10 +567,10 @@ fun CallHistoryScreen(
                     OutlinedTextField(
                         value = delayMins,
                         onValueChange = { delayMins = it.filter { c -> c.isDigit() } },
-                        label = { Text("Remind in (minutes)") },
+                        label = { Text(stringResource(R.string.ui_remind_in_minutes)) },
                         singleLine = true
                     )
-                    OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("Note") })
+                    OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text(stringResource(R.string.ui_note)) })
                 }
             },
             confirmButton = {
@@ -477,5 +584,102 @@ fun CallHistoryScreen(
                 TextButton(onClick = { reminderEntry = null }) { Text(stringResource(R.string.action_cancel)) }
             }
         )
+    }
+}
+
+
+private fun numberKey(item: CallLogItem): String =
+    item.normalizedNumber.ifBlank { item.number }.ifBlank { "unknown_${item.id}" }
+
+@Composable
+private fun DirectionCount(icon: androidx.compose.ui.graphics.vector.ImageVector, tint: Color, count: Int) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, null, tint = tint, modifier = Modifier.size(12.dp))
+        Spacer(Modifier.width(2.dp))
+        Text(
+            text = count.toString(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+
+@Composable
+private fun RecordingsSection(number: String) {
+    val context = LocalContext.current
+    val cs = MaterialTheme.colorScheme
+    var files by remember(number) { mutableStateOf(CallRecorder.recordingsFor(context, number)) }
+    var playingPath by remember { mutableStateOf<String?>(null) }
+    val playerHolder = remember { arrayOfNulls<android.media.MediaPlayer>(1) }
+    DisposableEffect(Unit) {
+        onDispose {
+            playerHolder[0]?.release()
+            playerHolder[0] = null
+        }
+    }
+    if (files.isEmpty()) return
+
+    DialMeCard {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                stringResource(R.string.recordings_title, files.size),
+                style = MaterialTheme.typography.labelLarge,
+                color = cs.primary
+            )
+            files.forEach { f ->
+                val isPlaying = playingPath == f.absolutePath
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = {
+                        playerHolder[0]?.release()
+                        playerHolder[0] = null
+                        if (isPlaying) {
+                            playingPath = null
+                        } else {
+                            runCatching {
+                                val mp = android.media.MediaPlayer()
+                                mp.setDataSource(f.absolutePath)
+                                mp.prepare()
+                                mp.setOnCompletionListener { playingPath = null }
+                                mp.start()
+                                playerHolder[0] = mp
+                                playingPath = f.absolutePath
+                            }.onFailure { playingPath = null }
+                        }
+                    }) {
+                        Icon(
+                            if (isPlaying) Icons.Rounded.Stop else Icons.Rounded.PlayArrow,
+                            contentDescription = null,
+                            tint = cs.primary
+                        )
+                    }
+                    val ts = f.name.removePrefix("rec_").substringBefore('_').toLongOrNull() ?: f.lastModified()
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            DateTimeUtils.formatFullDateTime(ts),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            stringResource(
+                                if (f.name.contains("_call_")) R.string.recording_src_call else R.string.recording_src_mic
+                            ),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = cs.onSurfaceVariant
+                        )
+                    }
+                    IconButton(onClick = {
+                        if (isPlaying) {
+                            playerHolder[0]?.release()
+                            playerHolder[0] = null
+                            playingPath = null
+                        }
+                        f.delete()
+                        files = files - f
+                    }) {
+                        Icon(Icons.Rounded.Delete, null, tint = cs.error)
+                    }
+                }
+            }
+        }
     }
 }

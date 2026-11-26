@@ -128,6 +128,16 @@ class MainActivity : AppCompatActivity() {
             }
 
             val config by viewModel.config.collectAsStateWithLifecycle()
+            LaunchedEffect(config.privacyModeEnabled) {
+                if (config.privacyModeEnabled) {
+                    window.setFlags(
+                        android.view.WindowManager.LayoutParams.FLAG_SECURE,
+                        android.view.WindowManager.LayoutParams.FLAG_SECURE
+                    )
+                } else {
+                    window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+                }
+            }
             DialMeTheme(config = config) {
                 DialMeRootApp(
                     viewModel = viewModel,
@@ -165,6 +175,9 @@ class MainActivity : AppCompatActivity() {
         val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or
             BiometricManager.Authenticators.DEVICE_CREDENTIAL
         if (manager.canAuthenticate(authenticators) != BiometricManager.BIOMETRIC_SUCCESS) {
+            // No screen lock / biometrics set up on this device: tell the user instead of
+            // silently pretending the app is protected.
+            android.widget.Toast.makeText(this, R.string.app_lock_unavailable, android.widget.Toast.LENGTH_LONG).show()
             onAuthenticated()
             return
         }
@@ -218,8 +231,13 @@ private fun DialMeRootApp(
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.refreshSystemState()
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> {
+                    viewModel.onAppForegrounded()
+                    viewModel.refreshSystemState()
+                }
+                Lifecycle.Event.ON_STOP -> viewModel.onAppBackgrounded()
+                else -> Unit
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -263,7 +281,12 @@ private fun DialMeRootApp(
         return
     }
 
-    val startRoute = remember(config.startTab) { routeForTab(config.startTab) }
+    val visibleTabs = remember(config.navTabOrder, config.hiddenTabs) {
+        config.navTabOrder.filter { it == MainTabId.SETTINGS || it !in config.hiddenTabs }
+            .ifEmpty { listOf(MainTabId.SETTINGS) }
+    }
+    val effectiveStartTab = if (config.startTab in visibleTabs) config.startTab else visibleTabs.first()
+    val startRoute = remember(effectiveStartTab) { routeForTab(effectiveStartTab) }
     val navBackStack by navController.currentBackStackEntryAsState()
     val currentDestRoute = navBackStack?.destination?.route.orEmpty()
 
@@ -278,7 +301,7 @@ private fun DialMeRootApp(
         if (intent != null) {
             roleLauncher.launch(intent)
         } else {
-            viewModel.notify("Default dialer role unavailable on this device")
+            viewModel.notifyRes(R.string.notify_dialer_role_unavailable)
         }
     }
 
@@ -287,7 +310,7 @@ private fun DialMeRootApp(
         if (intent != null) {
             roleLauncher.launch(intent)
         } else {
-            viewModel.notify("Call screening role requires Android 10+")
+            viewModel.notifyRes(R.string.notify_screening_role_requires_10)
         }
     }
 
@@ -310,7 +333,7 @@ private fun DialMeRootApp(
                                 alpha = config.cardTransparencyAlpha.coerceAtLeast(0.82f)
                             )
                         ) {
-                            config.navTabOrder.forEach { tab ->
+                            visibleTabs.forEach { tab ->
                                 val route = routeForTab(tab)
                                 val selected = currentDestRoute.contains(route::class.simpleName ?: "")
                                 NavigationBarItem(
@@ -339,7 +362,7 @@ private fun DialMeRootApp(
                             ),
                             modifier = Modifier.fillMaxHeight()
                         ) {
-                            config.navTabOrder.forEach { tab ->
+                            visibleTabs.forEach { tab ->
                                 val route = routeForTab(tab)
                                 val selected = currentDestRoute.contains(route::class.simpleName ?: "")
                                 NavigationRailItem(
@@ -525,7 +548,7 @@ private fun DialMeRootApp(
             title = { Text(stringResource(R.string.dialpad_choose_sim)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Calling ${viewModel.formatForDisplay(targetNumber)}")
+                    Text(stringResource(R.string.ui_calling, viewModel.formatForDisplay(targetNumber)))
                     simAccounts.forEach { sim ->
                         DialMeCard(
                             onClick = { viewModel.confirmSimAndCall(sim.id) },

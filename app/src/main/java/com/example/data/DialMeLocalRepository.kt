@@ -14,6 +14,7 @@ import com.example.core.database.CallNoteEntity
 import com.example.core.database.CallReminderEntity
 import com.example.core.database.CustomThemeEntity
 import com.example.core.database.DialMeDatabase
+import com.example.core.common.VaultCrypto
 import com.example.core.database.PrivateContactEntity
 import com.example.core.database.QuickResponseEntity
 import com.example.core.database.SpeedDialEntity
@@ -149,13 +150,13 @@ class DialMeLocalRepository(
         list.map {
             PrivateContact(
                 id = it.id,
-                displayName = it.displayName,
-                phoneNumber = it.phoneNumber,
-                normalizedNumber = it.normalizedNumber,
-                notes = it.notes,
+                displayName = VaultCrypto.decrypt(it.displayName),
+                phoneNumber = VaultCrypto.decrypt(it.phoneNumber),
+                normalizedNumber = VaultCrypto.decrypt(it.normalizedNumber),
+                notes = VaultCrypto.decrypt(it.notes),
                 createdAt = it.createdAt
             )
-        }
+        }.sortedBy { it.displayName.lowercase() }
     }
 
     val automationRules: Flow<List<AutomationRule>> = db.automationRuleDao().observeAll().map { list ->
@@ -372,10 +373,10 @@ class DialMeLocalRepository(
         val now = System.currentTimeMillis()
         db.privateContactDao().upsert(
             PrivateContactEntity(
-                displayName = name.trim(),
-                phoneNumber = phone.trim(),
-                normalizedNumber = PhoneFormatUtils.toE164OrNormalized(phone),
-                notes = notes.trim(),
+                displayName = VaultCrypto.encrypt(name.trim()),
+                phoneNumber = VaultCrypto.encrypt(phone.trim()),
+                normalizedNumber = VaultCrypto.encrypt(PhoneFormatUtils.toE164OrNormalized(phone)),
+                notes = VaultCrypto.encrypt(notes.trim()),
                 createdAt = now,
                 updatedAt = now
             )
@@ -469,7 +470,14 @@ class DialMeLocalRepository(
             QuickResponse(it.id, it.messageText, it.sortOrder, it.isBuiltIn)
         }
         val privates = db.privateContactDao().getAllOnce().map {
-            PrivateContact(it.id, it.displayName, it.phoneNumber, it.normalizedNumber, it.notes, it.createdAt)
+            PrivateContact(
+                it.id,
+                VaultCrypto.decrypt(it.displayName),
+                VaultCrypto.decrypt(it.phoneNumber),
+                VaultCrypto.decrypt(it.normalizedNumber),
+                VaultCrypto.decrypt(it.notes),
+                it.createdAt
+            )
         }
         val autos = db.automationRuleDao().getEnabledOnce().map {
             AutomationRule(

@@ -15,12 +15,18 @@ import com.example.domain.model.BlockRuleType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.N)
 class DialMeCallScreeningService : CallScreeningService() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    override fun onDestroy() {
+        scope.cancel()
+        super.onDestroy()
+    }
 
     override fun onScreenCall(callDetails: Call.Details) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
@@ -37,6 +43,23 @@ class DialMeCallScreeningService : CallScreeningService() {
         val digitsOnly = T9Utils.digitsOnly(rawNumber)
 
         scope.launch {
+            try {
+                screenCall(callDetails, rawNumber, isUnknownHidden, normalized, digitsOnly)
+            } catch (e: Exception) {
+                // Never leave the system waiting: on any failure let the call through.
+                runCatching { respondToCall(callDetails, CallResponse.Builder().build()) }
+            }
+        }
+    }
+
+    private suspend fun screenCall(
+        callDetails: Call.Details,
+        rawNumber: String,
+        isUnknownHidden: Boolean,
+        normalized: String,
+        digitsOnly: String
+    ) {
+        run {
             val db = DialMeDatabase.build(applicationContext)
             val rules = db.blockRuleDao().getEnabledRulesOnce()
             val matched = rules.firstOrNull { rule ->
@@ -52,7 +75,9 @@ class DialMeCallScreeningService : CallScreeningService() {
                             (digitsOnly.startsWith(prefixDigits) || normalized.startsWith(rule.pattern))
                     }
                     BlockRuleType.REGEX -> {
-                        runCatching { Regex(rule.pattern).containsMatchIn(rawNumber) }.getOrDefault(false)
+                        rule.pattern.length <= MAX_REGEX_LENGTH &&
+                            runCatching { Regex(rule.pattern).containsMatchIn(rawNumber.take(MAX_NUMBER_LENGTH)) }
+                                .getOrDefault(false)
                     }
                     BlockRuleType.NON_CONTACT -> {
                         !isKnownSystemContact(rawNumber)
@@ -86,6 +111,11 @@ class DialMeCallScreeningService : CallScreeningService() {
                 respondToCall(callDetails, CallResponse.Builder().build())
             }
         }
+    }
+
+    private companion object {
+        const val MAX_REGEX_LENGTH = 100
+        const val MAX_NUMBER_LENGTH = 64
     }
 
     private fun isKnownSystemContact(number: String): Boolean {

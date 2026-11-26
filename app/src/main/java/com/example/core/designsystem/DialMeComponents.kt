@@ -107,6 +107,7 @@ fun DialMeCard(
             modifier = modifier,
             shape = shape,
             color = effectiveColor,
+            contentColor = cs.onSurface,
             border = border
         ) {
             Column(content = content)
@@ -116,6 +117,7 @@ fun DialMeCard(
             modifier = modifier,
             shape = shape,
             color = effectiveColor,
+            contentColor = cs.onSurface,
             border = border
         ) {
             Column(content = content)

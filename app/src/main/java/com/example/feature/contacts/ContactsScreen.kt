@@ -262,7 +262,7 @@ fun ContactsScreen(
                         FilterChip(
                             selected = selectedGroup == null,
                             onClick = { viewModel.setSelectedGroup(null) },
-                            label = { Text("All (${contacts.size})") }
+                            label = { Text(stringResource(R.string.ui_all, contacts.size)) }
                         )
                     }
                     items(groups, key = { it.id }) { group ->
@@ -479,7 +479,7 @@ fun ContactsScreen(
                     ) {
                         Icon(Icons.Rounded.MusicNote, null, Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Ringtone", maxLines = 1)
+                        Text(stringResource(R.string.ui_ringtone), maxLines = 1)
                     }
                     OutlinedButton(
                         onClick = { noteContact = contact },
@@ -487,7 +487,7 @@ fun ContactsScreen(
                     ) {
                         Icon(Icons.Rounded.NoteAdd, null, Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Note", maxLines = 1)
+                        Text(stringResource(R.string.ui_note), maxLines = 1)
                     }
                     OutlinedButton(
                         onClick = { reminderContact = contact },
@@ -495,7 +495,7 @@ fun ContactsScreen(
                     ) {
                         Icon(Icons.Rounded.NotificationsActive, null, Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Remind", maxLines = 1)
+                        Text(stringResource(R.string.ui_remind), maxLines = 1)
                     }
                 }
 
@@ -540,8 +540,8 @@ fun ContactsScreen(
             title = { Text(stringResource(R.string.contacts_new)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, singleLine = true)
-                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Phone Number") }, singleLine = true)
+                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.ui_name)) }, singleLine = true)
+                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text(stringResource(R.string.ui_phone_number)) }, singleLine = true)
                 }
             },
             confirmButton = {
@@ -565,7 +565,7 @@ fun ContactsScreen(
             title = { Text(stringResource(R.string.contacts_duplicates)) },
             text = {
                 if (groupsList.isEmpty()) {
-                    Text("No duplicate contacts detected.")
+                    Text(stringResource(R.string.ui_no_duplicate_contacts_detected))
                 } else {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(groupsList, key = { it.key }) { grp ->
@@ -580,7 +580,7 @@ fun ContactsScreen(
                                             viewModel.mergeDuplicates(grp.contacts[0].contactId, grp.contacts[1].contactId)
                                             duplicateGroups = null
                                         }) {
-                                            Text("Merge First Two")
+                                            Text(stringResource(R.string.ui_merge_first_two))
                                         }
                                     }
                                 }
@@ -590,7 +590,7 @@ fun ContactsScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { duplicateGroups = null }) { Text("Close") }
+                TextButton(onClick = { duplicateGroups = null }) { Text(stringResource(R.string.ui_close)) }
             }
         )
     }
@@ -600,12 +600,12 @@ fun ContactsScreen(
         var noteText by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { noteContact = null },
-            title = { Text("Note for ${contact.displayName}") },
+            title = { Text(stringResource(R.string.ui_note_for, contact.displayName)) },
             text = {
                 OutlinedTextField(
                     value = noteText,
                     onValueChange = { noteText = it },
-                    label = { Text("Call / Contact Note") },
+                    label = { Text(stringResource(R.string.ui_call_contact_note)) },
                     minLines = 3
                 )
             },
@@ -627,19 +627,19 @@ fun ContactsScreen(
         var note by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { reminderContact = null },
-            title = { Text("Remind to call ${contact.displayName}") },
+            title = { Text(stringResource(R.string.ui_remind_to_call, contact.displayName)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = delayMins,
                         onValueChange = { delayMins = it.filter { ch -> ch.isDigit() } },
-                        label = { Text("Remind in (minutes)") },
+                        label = { Text(stringResource(R.string.ui_remind_in_minutes)) },
                         singleLine = true
                     )
                     OutlinedTextField(
                         value = note,
                         onValueChange = { note = it },
-                        label = { Text("Reminder note (optional)") }
+                        label = { Text(stringResource(R.string.ui_reminder_note_optional)) }
                     )
                 }
             },

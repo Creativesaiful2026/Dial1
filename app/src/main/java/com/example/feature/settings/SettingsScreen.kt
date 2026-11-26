@@ -128,7 +128,7 @@ fun SettingsScreen(
                                 Text(stringResource(R.string.role_dialer_cta))
                             }
                         } else {
-                            Text("Default Dialer Active", style = MaterialTheme.typography.labelLarge, color = cs.primary)
+                            Text(stringResource(R.string.ui_default_dialer_active), style = MaterialTheme.typography.labelLarge, color = cs.primary)
                         }
                     }
                 }
@@ -177,21 +177,21 @@ fun SettingsScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Keypad DTMF Sounds", modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.ui_keypad_dtmf_sounds), modifier = Modifier.weight(1f))
                         Switch(
                             checked = config.dialpadKeySounds,
                             onCheckedChange = { v -> viewModel.updateConfig { it.copy(dialpadKeySounds = v) } }
                         )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Keypad Haptic Vibration", modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.ui_keypad_haptic_vibration), modifier = Modifier.weight(1f))
                         Switch(
                             checked = config.dialpadHaptics,
                             onCheckedChange = { v -> viewModel.updateConfig { it.copy(dialpadHaptics = v) } }
                         )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Smart Clipboard Number Detect", modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.ui_smart_clipboard_number_detect), modifier = Modifier.weight(1f))
                         Switch(
                             checked = config.clipboardAutoDetect,
                             onCheckedChange = { v -> viewModel.updateConfig { it.copy(clipboardAutoDetect = v) } }
@@ -200,7 +200,7 @@ fun SettingsScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showDialpadPrefs = false }) { Text("Done") }
+                TextButton(onClick = { showDialpadPrefs = false }) { Text(stringResource(R.string.ui_done)) }
             }
         )
     }
@@ -211,7 +211,7 @@ fun SettingsScreen(
             title = { Text(stringResource(R.string.settings_calling)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Dual SIM Default Line", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.ui_dual_sim_default_line), style = MaterialTheme.typography.labelLarge)
                     SimSelectionMode.entries.forEach { mode ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             RadioButton(
@@ -224,7 +224,7 @@ fun SettingsScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showCallingPrefs = false }) { Text("Done") }
+                TextButton(onClick = { showCallingPrefs = false }) { Text(stringResource(R.string.ui_done)) }
             }
         )
     }
@@ -263,7 +263,7 @@ fun SettingsScreen(
     if (showHealthDialog) {
         AlertDialog(
             onDismissRequest = { showHealthDialog = false },
-            title = { Text("Permissions & Device Health") },
+            title = { Text(stringResource(R.string.ui_permissions_device_health)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("• Default Dialer Role: ${if (permissions.isDefaultDialer) "Active" else "Not Set"}")
@@ -283,7 +283,7 @@ fun SettingsScreen(
                             onClick = { context.startActivity(PermissionHelper.buildFullScreenIntentSettings(context)) },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Enable Full-Screen Call Alerts")
+                            Text(stringResource(R.string.ui_enable_full_screen_call_alerts))
                         }
                     }
                     OutlinedButton(
@@ -295,7 +295,7 @@ fun SettingsScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showHealthDialog = false }) { Text("Close") }
+                TextButton(onClick = { showHealthDialog = false }) { Text(stringResource(R.string.ui_close)) }
             }
         )
     }
@@ -315,8 +315,8 @@ fun SettingsScreen(
                             .height(110.dp)
                             .clip(RoundedCornerShape(14.dp))
                     )
-                    Text("DialMe v1.0.0", style = MaterialTheme.typography.titleMedium)
-                    Text("Your Dialer. Your Style.", color = cs.primary)
+                    Text(stringResource(R.string.ui_dialme_v1_0_0), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.ui_your_dialer_your_style), color = cs.primary)
                     Text(
                         "Open-source, 100% offline-first Android SIM-based dialer. No VoIP, no internet permissions, no tracking.\n\nLicense: GNU General Public License v3.0 (GPL-3.0).",
                         style = MaterialTheme.typography.bodyMedium
@@ -324,7 +324,7 @@ fun SettingsScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showAboutDialog = false }) { Text("Close") }
+                TextButton(onClick = { showAboutDialog = false }) { Text(stringResource(R.string.ui_close)) }
             }
         )
     }

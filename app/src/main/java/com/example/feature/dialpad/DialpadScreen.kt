@@ -1,5 +1,10 @@
 package com.example.feature.dialpad
 
+import com.example.core.designsystem.keyPressEffect
+import com.example.core.designsystem.dialKeyShape
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.BorderStroke
 import android.Manifest
 import android.content.Intent
 import android.media.AudioManager
@@ -370,6 +375,7 @@ fun DialpadScreen(
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontFamily = JetBrainsMonoFontFamily,
                         fontSize = when {
+                            dialInput.isEmpty() -> 14.sp
                             dialInput.length > 15 -> 19.sp
                             dialInput.length > 11 -> 23.sp
                             else -> 28.sp
@@ -422,12 +428,25 @@ fun DialpadScreen(
             else -> (60 * config.dialpadButtonScale).dp
         }.coerceIn(48.dp, 78.dp)
 
-        val keyShape = when (config.dialpadButtonShape) {
-            DialpadButtonShape.CIRCLE -> CircleShape
-            DialpadButtonShape.SQUIRCLE -> RoundedCornerShape(config.dialpadCornerRadiusDp.dp)
-            DialpadButtonShape.ROUNDED_RECT -> RoundedCornerShape(12.dp)
-            DialpadButtonShape.PILL -> RoundedCornerShape(50)
-        }
+        val keyShape = dialKeyShape(config.dialpadButtonShape, config.dialpadCornerRadiusDp)
+        val isDarkSurface = cs.background.luminance() < 0.5f
+        val glassTint = if (isDarkSurface) Color.White else cs.primary
+        val glassAlpha = config.dialpadGlassAlpha.coerceIn(0.05f, 0.6f)
+        val glassBrush = Brush.linearGradient(
+            colors = listOf(
+                glassTint.copy(alpha = (glassAlpha * 1.6f).coerceAtMost(0.9f)),
+                glassTint.copy(alpha = glassAlpha * 0.45f)
+            )
+        )
+        val glassBorder = BorderStroke(
+            1.dp,
+            Brush.linearGradient(
+                listOf(
+                    glassTint.copy(alpha = if (isDarkSurface) 0.55f else 0.45f),
+                    glassTint.copy(alpha = 0.08f)
+                )
+            )
+        )
 
         Column(
             modifier = Modifier
@@ -444,13 +463,21 @@ fun DialpadScreen(
                         val speedEntry = key.digit.toIntOrNull()?.let { slot ->
                             speedDials.firstOrNull { it.slot == slot }
                         }
+                        val keySource = remember { MutableInteractionSource() }
                         Surface(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(keyHeight)
+                                .keyPressEffect(
+                                    effect = config.keyPressEffect,
+                                    source = keySource,
+                                    color = cs.primary,
+                                    color2 = cs.secondary,
+                                    intensity = config.keyEffectIntensity
+                                )
                                 .clip(keyShape)
                                 .combinedClickable(
-                                    interactionSource = remember { MutableInteractionSource() },
+                                    interactionSource = keySource,
                                     indication = ripple(),
                                     onClick = {
                                         if (config.dialpadHaptics) {
@@ -478,10 +505,14 @@ fun DialpadScreen(
                                 )
                                 .testTag("dial_key_${key.digit}"),
                             shape = keyShape,
-                            color = cs.surfaceContainer.copy(alpha = config.cardTransparencyAlpha)
+                            color = if (config.dialpadGlass) Color.Transparent
+                            else cs.surfaceContainer.copy(alpha = config.cardTransparencyAlpha),
+                            border = if (config.dialpadGlass && config.dialpadKeyBorder) glassBorder else null
                         ) {
                             Column(
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .then(if (config.dialpadGlass) Modifier.background(glassBrush) else Modifier),
                                 verticalArrangement = Arrangement.Center,
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
@@ -494,7 +525,7 @@ fun DialpadScreen(
                                     ),
                                     color = cs.onSurface
                                 )
-                                val subText = speedEntry?.displayName?.take(6) ?: key.letters
+                                val subText = speedEntry?.displayName?.take(6) ?: (if (config.showDialpadLetters) key.letters else "")
                                 if (subText.isNotEmpty()) {
                                     Text(
                                         text = subText,
@@ -669,19 +700,19 @@ fun DialpadScreen(
         var number by remember { mutableStateOf(dialInput) }
         AlertDialog(
             onDismissRequest = { assignSpeedSlot = null },
-            title = { Text("Assign Speed Dial #$slot") },
+            title = { Text(stringResource(R.string.ui_assign_speed_dial, slot)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
-                        label = { Text("Label / Name") },
+                        label = { Text(stringResource(R.string.ui_label_name)) },
                         singleLine = true
                     )
                     OutlinedTextField(
                         value = number,
                         onValueChange = { number = it },
-                        label = { Text("Phone Number") },
+                        label = { Text(stringResource(R.string.ui_phone_number)) },
                         singleLine = true
                     )
                 }

@@ -15,7 +15,25 @@ enum class DialpadButtonShape {
     CIRCLE,
     SQUIRCLE,
     ROUNDED_RECT,
-    PILL
+    PILL,
+    SOFT_SQUARE,
+    LEAF,
+    DROP,
+    CUT_CORNER,
+    HEXAGON,
+    DIAMOND,
+    OCTAGON
+}
+
+@Serializable
+enum class KeyPressEffect {
+    NONE,
+    RIPPLE,
+    GRADIENT_BLOOM,
+    WATER_DROP,
+    WATER_BUBBLES,
+    GLOW_PULSE,
+    SPARKLE
 }
 
 @Serializable
@@ -68,6 +86,12 @@ enum class CallerNamePosition {
 }
 
 @Serializable
+enum class IncomingCallPresentation {
+    FULL_SCREEN,
+    HEADS_UP_WHEN_UNLOCKED
+}
+
+@Serializable
 enum class SimSelectionMode {
     ASK_EVERY_TIME,
     SIM_1,
@@ -108,6 +132,16 @@ data class DialMeConfig(
     val dialpadCornerRadiusDp: Int = 22,
     val dialpadSpacingDp: Int = 10,
     val dialpadKeySounds: Boolean = true,
+    val groupRecentsByNumber: Boolean = true,
+    val autoRecordCalls: Boolean = false,
+    val recordTryCallAudio: Boolean = true,
+    val keyPressEffect: KeyPressEffect = KeyPressEffect.GRADIENT_BLOOM,
+    val keyEffectIntensity: Float = 1.0f,
+    val dialpadGlass: Boolean = true,
+    val dialpadGlassAlpha: Float = 0.20f,
+    val dialpadKeyBorder: Boolean = true,
+    val callerBackgroundPath: String? = null,
+    val callerBackgroundDim: Float = 0.45f,
     val dialpadHaptics: Boolean = true,
     val clipboardAutoDetect: Boolean = true,
 
@@ -121,6 +155,7 @@ data class DialMeConfig(
     val callerAnswerStyle: CallerAnswerStyle = CallerAnswerStyle.SWIPE_PILL,
     val callerNamePosition: CallerNamePosition = CallerNamePosition.TOP,
     val callerButtonRadiusDp: Int = 36,
+    val incomingCallPresentation: IncomingCallPresentation = IncomingCallPresentation.FULL_SCREEN,
 
     val defaultSimMode: SimSelectionMode = SimSelectionMode.ASK_EVERY_TIME,
     val preferredSimAccountId: String? = null,
@@ -128,5 +163,8 @@ data class DialMeConfig(
 
     val privacyModeEnabled: Boolean = false,
     val appLockEnabled: Boolean = false,
+    val appLockTimeoutSec: Int = 30,
+    val hiddenTabs: List<MainTabId> = emptyList(),
+    val showDialpadLetters: Boolean = true,
     val languageTag: String = "system"
 )

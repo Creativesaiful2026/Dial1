@@ -1,5 +1,7 @@
 package com.example.feature.statistics
 
+import com.example.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -51,7 +53,7 @@ fun StatisticsScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text("Call Statistics") },
+            title = { Text(stringResource(R.string.ui_call_statistics)) },
             navigationIcon = {
                 IconButton(onClick = onBack) {
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back")
@@ -76,7 +78,7 @@ fun StatisticsScreen(
             item {
                 DialMeCard {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("Call Direction Breakdown", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.ui_call_direction_breakdown), style = MaterialTheme.typography.titleMedium)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             val slices = listOf(
                                 Triple("Incoming", stats.incomingCount, Color(0xFF10B981)),
@@ -121,7 +123,7 @@ fun StatisticsScreen(
             item {
                 DialMeCard {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("Hourly Call Activity (0h – 23h)", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.ui_hourly_call_activity_0h_23h), style = MaterialTheme.typography.titleMedium)
                         val maxHour = (stats.hourlyCounts.maxOrNull() ?: 1).coerceAtLeast(1)
                         val barColor = cs.primary
                         Canvas(modifier = Modifier.fillMaxWidth().height(110.dp)) {
@@ -142,7 +144,7 @@ fun StatisticsScreen(
             // Top Contacts
             if (stats.topContacts.isNotEmpty()) {
                 item {
-                    Text("Top Contacts", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.ui_top_contacts), style = MaterialTheme.typography.titleMedium)
                 }
                 items(stats.topContacts, key = { it.phoneNumber }) { c ->
                     DialMeCard {
@@ -152,7 +154,7 @@ fun StatisticsScreen(
                                 Text(c.phoneNumber, style = MaterialTheme.typography.labelSmall, color = cs.onSurfaceVariant)
                             }
                             Column(horizontalAlignment = Alignment.End) {
-                                Text("${c.callCount} calls", style = MaterialTheme.typography.labelLarge, color = cs.primary)
+                                Text(stringResource(R.string.ui_calls, c.callCount), style = MaterialTheme.typography.labelLarge, color = cs.primary)
                                 Text(DateTimeUtils.formatDurationReadable(c.totalDurationSeconds), style = MaterialTheme.typography.labelSmall, color = cs.onSurfaceVariant)
                             }
                         }

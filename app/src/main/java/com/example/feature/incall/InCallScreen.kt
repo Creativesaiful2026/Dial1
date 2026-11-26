@@ -1,5 +1,13 @@
 package com.example.feature.incall
 
+import com.example.core.telecom.CallRecorder
+import androidx.compose.material.icons.rounded.FiberManualRecord
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
+import android.content.pm.PackageManager
+import android.Manifest
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -121,6 +129,26 @@ fun InCallScreen(
 ) {
     val primary = uiState.primaryCall ?: return
     val cs = MaterialTheme.colorScheme
+    val recContext = LocalContext.current
+    var isRecording by remember { mutableStateOf(CallRecorder.isRecording) }
+    val micPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) isRecording = CallRecorder.start(recContext, primary.number, config.recordTryCallAudio)
+    }
+    val toggleRecording: () -> Unit = {
+        if (isPreviewMode) {
+            // Preview only: never record from the theme preview screen.
+        } else if (CallRecorder.isRecording) {
+            CallRecorder.stop()
+            isRecording = false
+        } else if (ContextCompat.checkSelfPermission(recContext, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            isRecording = CallRecorder.start(recContext, primary.number, config.recordTryCallAudio)
+        } else {
+            micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
     var showAudioSheet by remember { mutableStateOf(false) }
     var showSmsSheet by remember { mutableStateOf(false) }
     var showKeypad by remember { mutableStateOf(false) }
@@ -128,6 +156,14 @@ fun InCallScreen(
 
     var elapsedSeconds by remember(primary.callId, primary.connectTimeMillis, primary.state) {
         mutableLongStateOf(0L)
+    }
+    LaunchedEffect(primary.callId, primary.state, config.autoRecordCalls) {
+        if (!isPreviewMode && config.autoRecordCalls && primary.state == CallStateType.ACTIVE &&
+            !CallRecorder.isRecording &&
+            ContextCompat.checkSelfPermission(recContext, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        ) {
+            isRecording = CallRecorder.start(recContext, primary.number, config.recordTryCallAudio)
+        }
     }
     LaunchedEffect(primary.callId, primary.connectTimeMillis, primary.state) {
         while (primary.state == CallStateType.ACTIVE && primary.connectTimeMillis > 0L) {
@@ -137,8 +173,23 @@ fun InCallScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize().background(Color(0xFF070B14))) {
-        // Configurable Caller Screen Backdrop
-        when (config.callerScreenTheme) {
+        // Configurable Caller Screen Backdrop (a user-picked photo wins over the built-in styles)
+        val callerBgFile = remember(config.callerBackgroundPath) {
+            config.callerBackgroundPath?.let { java.io.File(it) }?.takeIf { it.exists() }
+        }
+        if (callerBgFile != null) {
+            AsyncImage(
+                model = callerBgFile,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = config.callerBackgroundDim.coerceIn(0f, 0.9f)))
+            )
+        } else when (config.callerScreenTheme) {
             CallerScreenThemeStyle.FULL_PHOTO -> {
                 if (!primary.photoUri.isNullOrBlank()) {
                     AsyncImage(
@@ -208,7 +259,7 @@ fun InCallScreen(
                 if (isPreviewMode) {
                     AssistChip(
                         onClick = onExitPreview,
-                        label = { Text("Caller Screen Theme Preview · Tap to Close") }
+                        label = { Text(stringResource(R.string.ui_caller_screen_theme_preview_tap_to_c)) }
                     )
                     Spacer(Modifier.height(8.dp))
                 }
@@ -368,6 +419,12 @@ fun InCallScreen(
                             active = false,
                             onClick = { showNoteDialog = true }
                         )
+                        InCallControlButton(
+                            icon = Icons.Rounded.FiberManualRecord,
+                            label = stringResource(if (isRecording) R.string.incall_recording else R.string.incall_record),
+                            active = isRecording,
+                            onClick = toggleRecording
+                        )
                     }
 
                     Button(
@@ -393,7 +450,7 @@ fun InCallScreen(
                 modifier = Modifier.fillMaxWidth().padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Select Audio Output", style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(R.string.ui_select_audio_output), style = MaterialTheme.typography.titleLarge)
                 uiState.availableAudioEndpoints.forEach { endpoint ->
                     DialMeCard(
                         containerColor = if (endpoint.isSelected) cs.primaryContainer else cs.surfaceContainerLow,
@@ -409,7 +466,7 @@ fun InCallScreen(
                         ) {
                             Text(endpoint.label, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                             if (endpoint.isSelected) {
-                                Text("Active", color = cs.primary, style = MaterialTheme.typography.labelLarge)
+                                Text(stringResource(R.string.ui_active), color = cs.primary, style = MaterialTheme.typography.labelLarge)
                             }
                         }
                     }
@@ -455,7 +512,7 @@ fun InCallScreen(
                 OutlinedTextField(
                     value = noteText,
                     onValueChange = { noteText = it },
-                    label = { Text("Note for ${primary.displayName ?: primary.number}") },
+                    label = { Text(stringResource(R.string.ui_note_for, primary.displayName ?: primary.number)) },
                     minLines = 3
                 )
             },
@@ -523,7 +580,7 @@ private fun CallerIdentityBlock(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.VerifiedUser, null, tint = Color(0xFF10B981), modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(4.dp))
-                Text("Carrier Verified", style = MaterialTheme.typography.labelSmall, color = Color(0xFF10B981))
+                Text(stringResource(R.string.ui_carrier_verified), style = MaterialTheme.typography.labelSmall, color = Color(0xFF10B981))
             }
         }
         val stateLabel = when (session.state) {

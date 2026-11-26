@@ -76,7 +76,7 @@ fun BackupAndRestoreScreen(
             DialMeCard {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Rounded.Security, null, tint = cs.primary)
-                    Text("100% Local Offline Backup", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.ui_100_local_offline_backup), style = MaterialTheme.typography.titleMedium)
                     Text(
                         "Exports all DialMe settings, custom theme configuration, speed dials, block rules, call notes, and private vault entries into a local JSON file via Android's Storage Access Framework. Nothing is ever uploaded to any cloud.",
                         style = MaterialTheme.typography.bodyMedium,
@@ -91,7 +91,7 @@ fun BackupAndRestoreScreen(
             ) {
                 Icon(Icons.Rounded.Upload, null)
                 Spacer(Modifier.width(8.dp))
-                Text("Export Local Backup (.json)")
+                Text(stringResource(R.string.ui_export_local_backup_json))
             }
 
             OutlinedButton(
@@ -100,7 +100,7 @@ fun BackupAndRestoreScreen(
             ) {
                 Icon(Icons.Rounded.Download, null)
                 Spacer(Modifier.width(8.dp))
-                Text("Import & Restore Backup (.json)")
+                Text(stringResource(R.string.ui_import_restore_backup_json))
             }
 
             Spacer(Modifier.weight(1f))
@@ -120,8 +120,8 @@ fun BackupAndRestoreScreen(
     if (confirmReset) {
         AlertDialog(
             onDismissRequest = { confirmReset = false },
-            title = { Text("Restore Default Preferences?") },
-            text = { Text("This resets DialMe's theme, layout, dialpad, and calling preferences back to factory defaults.") },
+            title = { Text(stringResource(R.string.ui_restore_default_preferences)) },
+            text = { Text(stringResource(R.string.ui_this_resets_dialme_s_theme_layout_di)) },
             confirmButton = {
                 Button(
                     onClick = {
