@@ -1,5 +1,8 @@
 package com.example.feature.callhistory
 
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.foundation.clickable
 import androidx.compose.runtime.DisposableEffect
 import com.example.core.telecom.CallRecorder
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -407,14 +410,28 @@ fun CallHistoryScreen(
                 }
 
                 if (callsForNumber.size > 1) {
+                    var callsExpanded by remember(entry.id) { mutableStateOf(false) }
                     DialMeCard {
                         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                stringResource(R.string.ui_calls, callsForNumber.size),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = cs.primary
-                            )
-                            callsForNumber.forEach { call ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { callsExpanded = !callsExpanded },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    stringResource(R.string.ui_calls, callsForNumber.size),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = cs.primary,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Icon(
+                                    imageVector = if (callsExpanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    tint = cs.primary
+                                )
+                            }
+                            if (callsExpanded) callsForNumber.forEach { call ->
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     val (icon, tint, labelRes) = when (call.direction) {
                                         CallDirection.INCOMING -> Triple(Icons.AutoMirrored.Rounded.CallReceived, Color(0xFF10B981), R.string.recents_filter_incoming)

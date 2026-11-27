@@ -33,7 +33,19 @@ enum class KeyPressEffect {
     WATER_DROP,
     WATER_BUBBLES,
     GLOW_PULSE,
-    SPARKLE
+    SPARKLE,
+    KEY_BORDER,
+    LINE_MOTION,
+    PULSE_RING,
+    SUNRAY,
+    UNDERLINE_SWIPE,
+    NEON_OUTLINE,
+    QUICK_FLASH,
+    CONFETTI,
+    SHOCKWAVE,
+    ORBIT,
+    LOVE_BURST,
+    FLOATING_HEARTS
 }
 
 @Serializable
@@ -135,7 +147,7 @@ data class DialMeConfig(
     val groupRecentsByNumber: Boolean = true,
     val autoRecordCalls: Boolean = false,
     val recordTryCallAudio: Boolean = true,
-    val keyPressEffect: KeyPressEffect = KeyPressEffect.GRADIENT_BLOOM,
+    val keyEffects: List<KeyPressEffect> = listOf(KeyPressEffect.GRADIENT_BLOOM),
     val keyEffectIntensity: Float = 1.0f,
     val dialpadGlass: Boolean = true,
     val dialpadGlassAlpha: Float = 0.20f,

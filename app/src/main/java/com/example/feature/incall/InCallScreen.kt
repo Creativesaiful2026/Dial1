@@ -405,16 +405,23 @@ fun InCallScreen(
                             enabled = primary.canHold,
                             onClick = { onToggleHold(primary.callId) }
                         )
-                        InCallControlButton(
-                            icon = when (uiState.activeAudioRoute) {
-                                AudioRouteType.BLUETOOTH -> Icons.Rounded.BluetoothAudio
-                                AudioRouteType.SPEAKER -> Icons.Rounded.VolumeUp
-                                else -> Icons.Rounded.Hearing
-                            },
-                            label = stringResource(R.string.incall_bluetooth),
-                            active = uiState.activeAudioRoute == AudioRouteType.BLUETOOTH,
-                            onClick = { showAudioSheet = true }
-                        )
+                        // The Speaker button already covers earpiece <-> speaker, so the Audio picker
+                        // only appears when another output (Bluetooth, wired headset...) is available.
+                        val hasExtraAudioOutput = uiState.activeAudioRoute.let {
+                            it == AudioRouteType.BLUETOOTH || it == AudioRouteType.WIRED_HEADSET || it == AudioRouteType.STREAMING
+                        } || uiState.availableAudioEndpoints.size > 2
+                        if (hasExtraAudioOutput) {
+                            InCallControlButton(
+                                icon = when (uiState.activeAudioRoute) {
+                                    AudioRouteType.BLUETOOTH -> Icons.Rounded.BluetoothAudio
+                                    AudioRouteType.SPEAKER -> Icons.Rounded.VolumeUp
+                                    else -> Icons.Rounded.Hearing
+                                },
+                                label = stringResource(R.string.incall_bluetooth),
+                                active = uiState.activeAudioRoute == AudioRouteType.BLUETOOTH,
+                                onClick = { showAudioSheet = true }
+                            )
+                        }
                         InCallControlButton(
                             icon = Icons.Rounded.NoteAdd,
                             label = stringResource(R.string.recents_add_note),

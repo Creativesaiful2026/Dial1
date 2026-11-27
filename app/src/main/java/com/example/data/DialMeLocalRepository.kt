@@ -191,23 +191,35 @@ class DialMeLocalRepository(
                 )
             )
         }
-        if (db.customThemeDao().count() == 0) {
+        run {
             val presets = listOf(
                 CustomThemePreset("aurora_teal", "Aurora Teal", true, "DARK", "#14B8A6", "#3B82F6", true, 0.88f, "SQUIRCLE", 22, "PLUS_JAKARTA"),
                 CustomThemePreset("amoled_emerald", "AMOLED Emerald", true, "AMOLED", "#10B981", "#06B6D4", false, 0.94f, "CIRCLE", 28, "SPACE_GROTESK"),
                 CustomThemePreset("solar_coral", "Solar Coral", true, "LIGHT", "#F97316", "#EC4899", true, 0.92f, "ROUNDED_RECT", 18, "PLUS_JAKARTA"),
-                CustomThemePreset("midnight_amber", "Midnight Amber", true, "DARK", "#F59E0B", "#EF4444", true, 0.86f, "PILL", 24, "JETBRAINS_MONO")
+                CustomThemePreset("midnight_amber", "Midnight Amber", true, "DARK", "#F59E0B", "#EF4444", true, 0.86f, "PILL", 24, "JETBRAINS_MONO"),
+                CustomThemePreset("candy_pop", "Candy Pop", true, "LIGHT", "#EC4899", "#8B5CF6", true, 0.90f, "SOFT_SQUARE", 24, "PLUS_JAKARTA"),
+                CustomThemePreset("ocean_breeze", "Ocean Breeze", true, "LIGHT", "#0EA5E9", "#14B8A6", true, 0.90f, "CIRCLE", 28, "PLUS_JAKARTA"),
+                CustomThemePreset("mint_fresh", "Mint Fresh", true, "LIGHT", "#10B981", "#84CC16", true, 0.92f, "LEAF", 20, "PLUS_JAKARTA"),
+                CustomThemePreset("sunset_glow", "Sunset Glow", true, "DARK", "#F97316", "#EC4899", true, 0.84f, "DROP", 22, "SPACE_GROTESK"),
+                CustomThemePreset("lavender_dream", "Lavender Dream", true, "LIGHT", "#8B5CF6", "#F472B6", true, 0.90f, "SQUIRCLE", 26, "PLUS_JAKARTA"),
+                CustomThemePreset("neon_night", "Neon Night", true, "AMOLED", "#22D3EE", "#A855F7", true, 0.80f, "HEXAGON", 20, "SPACE_GROTESK"),
+                CustomThemePreset("rose_gold", "Rose Gold", true, "LIGHT", "#F43F5E", "#F59E0B", true, 0.92f, "PILL", 24, "PLUS_JAKARTA"),
+                CustomThemePreset("forest_mist", "Forest Mist", true, "DARK", "#22C55E", "#06B6D4", true, 0.86f, "SOFT_SQUARE", 22, "PLUS_JAKARTA"),
+                CustomThemePreset("cyber_yellow", "Cyber Yellow", true, "AMOLED", "#FACC15", "#EC4899", true, 0.78f, "CUT_CORNER", 16, "JETBRAINS_MONO"),
+                CustomThemePreset("berry_blast", "Berry Blast", true, "DARK", "#D946EF", "#F43F5E", true, 0.84f, "OCTAGON", 20, "SPACE_GROTESK"),
+                CustomThemePreset("sky_candy", "Sky Candy", true, "LIGHT", "#6366F1", "#22D3EE", true, 0.90f, "DROP", 24, "PLUS_JAKARTA")
             )
-            val now = System.currentTimeMillis()
+            // Stable order, and (re)seeding on every start so new built-in themes reach updated installs.
+            val now = 1_700_000_000_000L
             db.customThemeDao().insertAll(
-                presets.map {
+                presets.mapIndexed { index, it ->
                     CustomThemeEntity(
                         id = it.id,
                         name = it.name,
                         isBuiltIn = true,
                         themeJson = json.encodeToString(it),
-                        createdAt = now,
-                        updatedAt = now
+                        createdAt = now - index,
+                        updatedAt = now - index
                     )
                 }
             )

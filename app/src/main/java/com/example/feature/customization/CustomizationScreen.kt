@@ -173,19 +173,21 @@ fun CustomizationScreen(
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(
                                 onClick = { exportThemeLauncher.launch("dialme_theme.json") },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                             ) {
                                 Icon(Icons.Rounded.Upload, null, Modifier.size(16.dp))
                                 Spacer(Modifier.width(4.dp))
-                                Text(stringResource(R.string.ui_export))
+                                Text(stringResource(R.string.ui_export), maxLines = 1, softWrap = false)
                             }
                             OutlinedButton(
                                 onClick = { importThemeLauncher.launch(arrayOf("application/json", "*/*")) },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                             ) {
                                 Icon(Icons.Rounded.Download, null, Modifier.size(16.dp))
                                 Spacer(Modifier.width(4.dp))
-                                Text(stringResource(R.string.ui_import))
+                                Text(stringResource(R.string.ui_import), maxLines = 1, softWrap = false)
                             }
                             OutlinedButton(onClick = { viewModel.resetAllDefaults() }) {
                                 Icon(Icons.Rounded.RestartAlt, null, Modifier.size(16.dp))
@@ -315,12 +317,25 @@ fun CustomizationScreen(
                             valueRange = 0f..24f
                         )
                         Text(stringResource(R.string.key_effect_label), style = MaterialTheme.typography.labelLarge)
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(KeyPressEffect.entries) { effect ->
-                                FilterChip(
-                                    selected = config.keyPressEffect == effect,
-                                    onClick = { viewModel.updateConfig { it.copy(keyPressEffect = effect) } },
-                                    label = { Text(effect.name.replace('_', ' ')) }
+                        KEY_EFFECT_INFO.forEach { (effect, titleRes, descRes) ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(stringResource(titleRes), style = MaterialTheme.typography.bodyLarge)
+                                    Text(
+                                        stringResource(descRes),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = cs.onSurfaceVariant
+                                    )
+                                }
+                                Switch(
+                                    checked = effect in config.keyEffects,
+                                    onCheckedChange = { on ->
+                                        viewModel.updateConfig { cfg ->
+                                            cfg.copy(
+                                                keyEffects = if (on) (cfg.keyEffects + effect).distinct() else cfg.keyEffects - effect
+                                            )
+                                        }
+                                    }
                                 )
                             }
                         }
@@ -640,3 +655,25 @@ private fun CallBackgroundRow(label: String, path: String?, onPick: () -> Unit, 
         }
     }
 }
+
+
+private val KEY_EFFECT_INFO = listOf(
+    Triple(KeyPressEffect.RIPPLE, R.string.fx_ripple_t, R.string.fx_ripple_d),
+    Triple(KeyPressEffect.GLOW_PULSE, R.string.fx_glow_t, R.string.fx_glow_d),
+    Triple(KeyPressEffect.GRADIENT_BLOOM, R.string.fx_bloom_t, R.string.fx_bloom_d),
+    Triple(KeyPressEffect.WATER_DROP, R.string.fx_drop_t, R.string.fx_drop_d),
+    Triple(KeyPressEffect.WATER_BUBBLES, R.string.fx_bubbles_t, R.string.fx_bubbles_d),
+    Triple(KeyPressEffect.SPARKLE, R.string.fx_sparkle_t, R.string.fx_sparkle_d),
+    Triple(KeyPressEffect.KEY_BORDER, R.string.fx_border_t, R.string.fx_border_d),
+    Triple(KeyPressEffect.LINE_MOTION, R.string.fx_line_t, R.string.fx_line_d),
+    Triple(KeyPressEffect.PULSE_RING, R.string.fx_pulse_t, R.string.fx_pulse_d),
+    Triple(KeyPressEffect.SUNRAY, R.string.fx_sunray_t, R.string.fx_sunray_d),
+    Triple(KeyPressEffect.UNDERLINE_SWIPE, R.string.fx_underline_t, R.string.fx_underline_d),
+    Triple(KeyPressEffect.NEON_OUTLINE, R.string.fx_neon_t, R.string.fx_neon_d),
+    Triple(KeyPressEffect.QUICK_FLASH, R.string.fx_flash_t, R.string.fx_flash_d),
+    Triple(KeyPressEffect.CONFETTI, R.string.fx_confetti_t, R.string.fx_confetti_d),
+    Triple(KeyPressEffect.SHOCKWAVE, R.string.fx_shock_t, R.string.fx_shock_d),
+    Triple(KeyPressEffect.ORBIT, R.string.fx_orbit_t, R.string.fx_orbit_d),
+    Triple(KeyPressEffect.LOVE_BURST, R.string.fx_love_t, R.string.fx_love_d),
+    Triple(KeyPressEffect.FLOATING_HEARTS, R.string.fx_hearts_t, R.string.fx_hearts_d)
+)

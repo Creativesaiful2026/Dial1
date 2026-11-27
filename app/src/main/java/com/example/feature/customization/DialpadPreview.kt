@@ -1,5 +1,12 @@
 package com.example.feature.customization
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -48,6 +55,7 @@ private val PREVIEW_LETTERS = mapOf(
 fun DialpadPreviewPanel(config: DialMeConfig, modifier: Modifier = Modifier) {
     val cs = MaterialTheme.colorScheme
     val spacing = config.dialpadSpacingDp.coerceIn(3, 10).dp
+    var expanded by remember { mutableStateOf(true) }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -57,7 +65,25 @@ fun DialpadPreviewPanel(config: DialMeConfig, modifier: Modifier = Modifier) {
             .padding(10.dp),
         verticalArrangement = Arrangement.spacedBy(spacing)
     ) {
-        PREVIEW_KEYS.chunked(3).forEach { row ->
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.dialpad_preview_title),
+                style = MaterialTheme.typography.labelLarge,
+                color = cs.primary,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = if (expanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
+                contentDescription = null,
+                tint = cs.onSurfaceVariant
+            )
+        }
+        if (expanded) PREVIEW_KEYS.chunked(3).forEach { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(spacing)
@@ -67,13 +93,16 @@ fun DialpadPreviewPanel(config: DialMeConfig, modifier: Modifier = Modifier) {
                 }
             }
         }
-        Text(
-            text = stringResource(R.string.dialpad_preview_hint),
-            style = MaterialTheme.typography.labelSmall,
-            color = cs.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
+        if (expanded) {
+            Text(
+                text = stringResource(R.string.dialpad_preview_hint),
+                style = MaterialTheme.typography.labelSmall,
+                color = cs.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 
@@ -101,7 +130,8 @@ private fun PreviewKey(key: String, letters: String?, config: DialMeConfig, modi
         modifier = modifier
             .height(38.dp)
             .keyPressEffect(
-                effect = config.keyPressEffect,
+                effects = config.keyEffects,
+                shape = shape,
                 source = source,
                 color = cs.primary,
                 color2 = cs.secondary,

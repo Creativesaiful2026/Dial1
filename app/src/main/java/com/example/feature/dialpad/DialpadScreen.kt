@@ -469,7 +469,8 @@ fun DialpadScreen(
                                 .weight(1f)
                                 .height(keyHeight)
                                 .keyPressEffect(
-                                    effect = config.keyPressEffect,
+                                    effects = config.keyEffects,
+                                    shape = keyShape,
                                     source = keySource,
                                     color = cs.primary,
                                     color2 = cs.secondary,
