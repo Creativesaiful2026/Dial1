@@ -168,6 +168,13 @@ private fun effectDuration(effect: KeyPressEffect): Int = when (effect) {
     KeyPressEffect.NONE -> 1
 }
 
+/** Converts any shape outline into a Path so it can be stroked or filled with drawPath. */
+private fun Outline.toPath(): Path = when (this) {
+    is Outline.Rectangle -> Path().apply { addRect(rect) }
+    is Outline.Rounded -> Path().apply { addRoundRect(roundRect) }
+    is Outline.Generic -> path
+}
+
 private val HEART_PINK = Color(0xFFF43F5E)
 private val HEART_SOFT = Color(0xFFFB7185)
 private val CONFETTI_COLORS = listOf(
@@ -278,7 +285,7 @@ private fun DrawScope.drawKeyEffect(
         KeyPressEffect.KEY_BORDER -> {
             val col = c1.copy(alpha = a(0.95f * fade * k))
             if (outline != null) {
-                drawOutline(outline, col, style = Stroke(width = 3.5f * k))
+                drawPath(outline.toPath(), col, style = Stroke(width = 3.5f * k))
             } else {
                 drawRoundRect(col, cornerRadius = CornerRadius(reach * 0.25f), style = Stroke(width = 3.5f * k))
             }
@@ -333,8 +340,8 @@ private fun DrawScope.drawKeyEffect(
             val sc = 1f + 0.22f * t
             if (outline != null) {
                 withTransform({ scale(sc, sc, center) }) {
-                    drawOutline(outline, c1.copy(alpha = a(0.8f * fade * k)), style = Stroke(width = 6f * fade + 2f))
-                    drawOutline(outline, Color.White.copy(alpha = a(0.6f * fade)), style = Stroke(width = 1.5f))
+                    drawPath(outline.toPath(), c1.copy(alpha = a(0.8f * fade * k)), style = Stroke(width = 6f * fade + 2f))
+                    drawPath(outline.toPath(), Color.White.copy(alpha = a(0.6f * fade)), style = Stroke(width = 1.5f))
                 }
             } else {
                 drawCircle(color = c1.copy(alpha = a(0.8f * fade * k)), radius = reach * 0.5f * sc, center = center, style = Stroke(width = 4f))
@@ -342,7 +349,7 @@ private fun DrawScope.drawKeyEffect(
         }
         KeyPressEffect.QUICK_FLASH -> {
             val col = Color.White.copy(alpha = a(0.75f * fade * fade * k))
-            if (outline != null) drawOutline(outline, col) else drawRect(col)
+            if (outline != null) drawPath(outline.toPath(), col) else drawRect(col)
         }
         KeyPressEffect.CONFETTI -> {
             for (i in 0 until 22) {
