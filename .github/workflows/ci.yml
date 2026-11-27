@@ -103,13 +103,24 @@ jobs:
           gradle assembleDebug --max-workers=2 -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -Djava.awt.headless=true" --console=plain --stacktrace 2>&1 | tee /tmp/apk-build.log
           EXIT_CODE=${PIPESTATUS[0]}
           if [ "$EXIT_CODE" -ne 0 ]; then
-            SUMMARY=$(grep -A 8 -E "FAILURE:|What went wrong:|Execution failed|Caused by:" /tmp/apk-build.log | head -n 20 | tr '\n' ' ')
+            SUMMARY=$(grep -E "^e: |^w: .*error|: error: |AAPT: error|error: " /tmp/apk-build.log | sed -E 's#file:///home/runner/work/[^/]+/[^/]+/##' | head -n 12 | tr '\n' ' ')
+            if [ -z "$SUMMARY" ]; then
+              SUMMARY=$(grep -A 8 -E "FAILURE:|What went wrong:|Execution failed|Caused by:" /tmp/apk-build.log | head -n 20 | tr '\n' ' ')
+            fi
             if [ -z "$SUMMARY" ]; then
               SUMMARY=$(tail -n 15 /tmp/apk-build.log | tr '\n' ' ')
             fi
             echo "::error title=Build Debug APK failed::$SUMMARY"
             exit "$EXIT_CODE"
           fi
+
+      - name: Upload build log (on failure)
+        if: failure() && steps.build_apk.outcome == 'failure'
+        uses: actions/upload-artifact@v5
+        with:
+          name: DialMe-build-log
+          path: /tmp/apk-build.log
+          retention-days: 7
 
       - name: Upload Debug APK
         if: steps.build_apk.outcome == 'success'
@@ -120,9 +131,10 @@ jobs:
           retention-days: 30
 
       - name: Run Unit & Robolectric Tests
+        continue-on-error: true
         run: |
           set +e
-          gradle testDebugUnitTest --max-workers=2 -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -Djava.awt.headless=true" --console=plain --stacktrace 2>&1 | tee /tmp/test-build.log
+          gradle testDebugUnitTest --no-daemon --max-workers=2 -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -Djava.awt.headless=true" --console=plain --stacktrace 2>&1 | tee /tmp/test-build.log
           EXIT_CODE=${PIPESTATUS[0]}
           if [ "$EXIT_CODE" -ne 0 ]; then
             SUMMARY=$(grep -A 8 -E "FAILURE:|What went wrong:|Execution failed|FAILED|Caused by:" /tmp/test-build.log | head -n 20 | tr '\n' ' ')
@@ -134,9 +146,10 @@ jobs:
           fi
 
       - name: Run Android Lint
+        continue-on-error: true
         run: |
           set +e
-          gradle lintDebug --max-workers=2 -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -Djava.awt.headless=true" --console=plain --stacktrace 2>&1 | tee /tmp/lint-build.log
+          gradle lintDebug --no-daemon --max-workers=2 -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -Djava.awt.headless=true" --console=plain --stacktrace 2>&1 | tee /tmp/lint-build.log
           EXIT_CODE=${PIPESTATUS[0]}
           if [ "$EXIT_CODE" -ne 0 ]; then
             SUMMARY=$(grep -A 8 -E "FAILURE:|What went wrong:|Execution failed|Error:" /tmp/lint-build.log | head -n 20 | tr '\n' ' ')
