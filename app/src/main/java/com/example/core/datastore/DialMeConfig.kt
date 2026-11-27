@@ -141,6 +141,8 @@ data class DialMeConfig(
     val dialpadGlassAlpha: Float = 0.20f,
     val dialpadKeyBorder: Boolean = true,
     val callerBackgroundPath: String? = null,
+    val incomingCallBackgroundPath: String? = null,
+    val outgoingCallBackgroundPath: String? = null,
     val callerBackgroundDim: Float = 0.45f,
     val dialpadHaptics: Boolean = true,
     val clipboardAutoDetect: Boolean = true,
@@ -168,3 +170,6 @@ data class DialMeConfig(
     val showDialpadLetters: Boolean = true,
     val languageTag: String = "system"
 )
+
+/** Which call-screen background photo is being edited. */
+enum class CallBackgroundSlot { GENERAL, INCOMING, OUTGOING }

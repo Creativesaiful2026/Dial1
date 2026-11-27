@@ -1,5 +1,6 @@
 package com.example.feature.common
 
+import com.example.core.datastore.CallBackgroundSlot
 import com.example.R
 import android.content.Context
 import android.net.Uri
@@ -544,7 +545,20 @@ class DialMeMainViewModel(
         }
     }
 
-    fun importCallerBackground(uri: Uri) {
+    private fun callBackgroundPath(slot: CallBackgroundSlot): String? = when (slot) {
+        CallBackgroundSlot.GENERAL -> config.value.callerBackgroundPath
+        CallBackgroundSlot.INCOMING -> config.value.incomingCallBackgroundPath
+        CallBackgroundSlot.OUTGOING -> config.value.outgoingCallBackgroundPath
+    }
+
+    private fun withCallBackgroundPath(cfg: DialMeConfig, slot: CallBackgroundSlot, path: String?): DialMeConfig =
+        when (slot) {
+            CallBackgroundSlot.GENERAL -> cfg.copy(callerBackgroundPath = path)
+            CallBackgroundSlot.INCOMING -> cfg.copy(incomingCallBackgroundPath = path)
+            CallBackgroundSlot.OUTGOING -> cfg.copy(outgoingCallBackgroundPath = path)
+        }
+
+    fun importCallerBackground(uri: Uri, slot: CallBackgroundSlot = CallBackgroundSlot.GENERAL) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val dir = File(appContext.filesDir, "themes").apply { mkdirs() }
@@ -553,8 +567,8 @@ class DialMeMainViewModel(
                 appContext.contentResolver.openInputStream(uri)?.use { input ->
                     dest.outputStream().use { output -> input.copyTo(output) }
                 }
-                val old = config.value.callerBackgroundPath
-                prefsRepo.updateConfig { it.copy(callerBackgroundPath = dest.absolutePath) }
+                val old = callBackgroundPath(slot)
+                prefsRepo.updateConfig { withCallBackgroundPath(it, slot, dest.absolutePath) }
                 old?.let { runCatching { File(it).delete() } }
                 notifyRes(R.string.notify_background_applied)
             } catch (_: Exception) {
@@ -563,9 +577,9 @@ class DialMeMainViewModel(
         }
     }
 
-    fun clearCallerBackground() {
-        val old = config.value.callerBackgroundPath
-        updateConfig { it.copy(callerBackgroundPath = null) }
+    fun clearCallerBackground(slot: CallBackgroundSlot = CallBackgroundSlot.GENERAL) {
+        val old = callBackgroundPath(slot)
+        updateConfig { withCallBackgroundPath(it, slot, null) }
         old?.let { runCatching { File(it).delete() } }
     }
 

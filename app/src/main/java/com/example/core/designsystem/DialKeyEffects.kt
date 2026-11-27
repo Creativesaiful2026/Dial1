@@ -26,7 +26,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.example.core.datastore.DialpadButtonShape
 import com.example.core.datastore.KeyPressEffect
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.sin
@@ -81,15 +82,21 @@ fun Modifier.keyPressEffect(
     var seed by remember { mutableStateOf(0) }
 
     LaunchedEffect(source, effect) {
-        source.interactions.collectLatest { interaction ->
+        var running: Job? = null
+        // NOTE: collectLatest would cancel the animation as soon as the Release event arrives,
+        // freezing the effect on screen. Each press runs in its own coroutine instead.
+        source.interactions.collect { interaction ->
             if (interaction is PressInteraction.Press) {
                 origin = interaction.pressPosition
                 seed += 1
-                progress.snapTo(0f)
-                progress.animateTo(
-                    1f,
-                    tween(durationMillis = effectDuration(effect), easing = LinearOutSlowInEasing)
-                )
+                running?.cancel()
+                running = launch {
+                    progress.snapTo(0f)
+                    progress.animateTo(
+                        1f,
+                        tween(durationMillis = effectDuration(effect), easing = LinearOutSlowInEasing)
+                    )
+                }
             }
         }
     }

@@ -174,8 +174,10 @@ fun InCallScreen(
 
     Box(modifier = Modifier.fillMaxSize().background(Color(0xFF070B14))) {
         // Configurable Caller Screen Backdrop (a user-picked photo wins over the built-in styles)
-        val callerBgFile = remember(config.callerBackgroundPath) {
-            config.callerBackgroundPath?.let { java.io.File(it) }?.takeIf { it.exists() }
+        val callerBgPath = (if (primary.isIncoming) config.incomingCallBackgroundPath else config.outgoingCallBackgroundPath)
+            ?: config.callerBackgroundPath
+        val callerBgFile = remember(callerBgPath) {
+            callerBgPath?.let { java.io.File(it) }?.takeIf { it.exists() }
         }
         if (callerBgFile != null) {
             AsyncImage(

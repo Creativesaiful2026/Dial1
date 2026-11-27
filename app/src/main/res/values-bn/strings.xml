@@ -266,4 +266,8 @@
     <string name="record_try_call_audio_label">সরাসরি কল অডিও চেষ্টা করুন (দুই পক্ষ, স্পিকার ছাড়া)</string>
     <string name="recording_src_call">কল অডিও (দুই পক্ষ)</string>
     <string name="recording_src_mic">শুধু মাইক্রোফোন</string>
+    <string name="caller_bg_all">সব কল (ডিফল্ট)</string>
+    <string name="caller_bg_incoming">ইনকামিং কলের ছবি</string>
+    <string name="caller_bg_outgoing">আউটগোয়িং কলের ছবি</string>
+    <string name="dialpad_preview_hint">লাইভ প্রিভিউ: ইফেক্ট দেখতে কী-তে ট্যাপ করুন</string>
 </resources>

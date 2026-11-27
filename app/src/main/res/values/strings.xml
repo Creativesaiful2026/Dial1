@@ -266,4 +266,8 @@
     <string name="record_try_call_audio_label">Try direct call audio (both sides, no speaker)</string>
     <string name="recording_src_call">Call audio (both sides)</string>
     <string name="recording_src_mic">Microphone only</string>
+    <string name="caller_bg_all">All calls (default)</string>
+    <string name="caller_bg_incoming">Incoming call photo</string>
+    <string name="caller_bg_outgoing">Outgoing call photo</string>
+    <string name="dialpad_preview_hint">Live preview: tap the keys to try the effect</string>
 </resources>

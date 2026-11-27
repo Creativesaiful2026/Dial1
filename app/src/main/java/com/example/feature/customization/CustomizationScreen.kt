@@ -1,5 +1,7 @@
 package com.example.feature.customization
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.example.core.datastore.CallBackgroundSlot
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -105,9 +107,10 @@ fun CustomizationScreen(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri -> uri?.let { viewModel.importCustomBackground(it) } }
 
+    var pendingBgSlot by remember { mutableStateOf(CallBackgroundSlot.GENERAL) }
     val callerPhotoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri -> uri?.let { viewModel.importCallerBackground(it) } }
+    ) { uri -> uri?.let { viewModel.importCallerBackground(it, pendingBgSlot) } }
 
     val exportThemeLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
@@ -135,6 +138,9 @@ fun CustomizationScreen(
             },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
         )
+
+        // Live dialpad preview, always visible while you adjust the settings below.
+        DialpadPreviewPanel(config = config)
 
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
@@ -428,24 +434,34 @@ fun CustomizationScreen(
                             color = cs.onSurfaceVariant
                         )
                         Text(stringResource(R.string.caller_bg_label), style = MaterialTheme.typography.titleMedium)
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(
-                                onClick = {
-                                    callerPhotoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                                },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Icon(Icons.Rounded.Image, null, Modifier.size(16.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text(stringResource(R.string.caller_bg_pick))
-                            }
-                            if (config.callerBackgroundPath != null) {
-                                TextButton(onClick = { viewModel.clearCallerBackground() }) {
-                                    Text(stringResource(R.string.ui_clear))
-                                }
-                            }
-                        }
-                        if (config.callerBackgroundPath != null) {
+                        CallBackgroundRow(
+                            label = stringResource(R.string.caller_bg_incoming),
+                            path = config.incomingCallBackgroundPath,
+                            onPick = {
+                                pendingBgSlot = CallBackgroundSlot.INCOMING
+                                callerPhotoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            },
+                            onClear = { viewModel.clearCallerBackground(CallBackgroundSlot.INCOMING) }
+                        )
+                        CallBackgroundRow(
+                            label = stringResource(R.string.caller_bg_outgoing),
+                            path = config.outgoingCallBackgroundPath,
+                            onPick = {
+                                pendingBgSlot = CallBackgroundSlot.OUTGOING
+                                callerPhotoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            },
+                            onClear = { viewModel.clearCallerBackground(CallBackgroundSlot.OUTGOING) }
+                        )
+                        CallBackgroundRow(
+                            label = stringResource(R.string.caller_bg_all),
+                            path = config.callerBackgroundPath,
+                            onPick = {
+                                pendingBgSlot = CallBackgroundSlot.GENERAL
+                                callerPhotoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            },
+                            onClear = { viewModel.clearCallerBackground(CallBackgroundSlot.GENERAL) }
+                        )
+                        if (config.callerBackgroundPath != null || config.incomingCallBackgroundPath != null || config.outgoingCallBackgroundPath != null) {
                             Text(stringResource(R.string.caller_bg_dim, (config.callerBackgroundDim * 100).roundToInt()))
                             Slider(
                                 value = config.callerBackgroundDim,
@@ -590,5 +606,37 @@ fun CustomizationScreen(
                 TextButton(onClick = { showSavePresetDialog = false }) { Text(stringResource(R.string.action_cancel)) }
             }
         )
+    }
+}
+
+
+@Composable
+private fun CallBackgroundRow(label: String, path: String?, onPick: () -> Unit, onClear: () -> Unit) {
+    val cs = MaterialTheme.colorScheme
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        val file = remember(path) { path?.let { java.io.File(it) }?.takeIf { it.exists() } }
+        Box(
+            modifier = Modifier
+                .size(46.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(cs.surfaceContainerHigh),
+            contentAlignment = Alignment.Center
+        ) {
+            if (file != null) {
+                coil.compose.AsyncImage(
+                    model = file,
+                    contentDescription = null,
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Icon(Icons.Rounded.Image, null, tint = cs.onSurfaceVariant, modifier = Modifier.size(20.dp))
+            }
+        }
+        Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+        OutlinedButton(onClick = onPick) { Text(stringResource(R.string.caller_bg_pick)) }
+        if (path != null) {
+            TextButton(onClick = onClear) { Text(stringResource(R.string.ui_clear)) }
+        }
     }
 }
