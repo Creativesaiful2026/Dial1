@@ -99,14 +99,16 @@ class DialMeCallScreeningService : CallScreeningService() {
                         timestamp = System.currentTimeMillis()
                     )
                 )
-                val response = CallResponse.Builder()
+                val builder = CallResponse.Builder()
                     .setDisallowCall(action == BlockAction.REJECT)
                     .setRejectCall(action == BlockAction.REJECT)
-                    .setSilenceCall(true)
                     .setSkipCallLog(matched.skipCallLog)
                     .setSkipNotification(matched.skipNotification)
-                    .build()
-                respondToCall(callDetails, response)
+                // setSilenceCall exists only on Android 10+ (API 29); older versions would crash.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    builder.setSilenceCall(true)
+                }
+                respondToCall(callDetails, builder.build())
             } else {
                 respondToCall(callDetails, CallResponse.Builder().build())
             }
